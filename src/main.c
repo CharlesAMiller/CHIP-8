@@ -153,19 +153,20 @@ void decode(char instruction[2], op *decoded_op)
         }
         break;
 
-    // Jump
     case 1:
         decoded_op->type = JUMP;
         break;
 
-    // Set Register
     case 6:
         decoded_op->type = SET_REG;
         break;
 
-    // Add Register
     case 7:
         decoded_op->type = ADD_REG;
+        break;
+    
+    case 0xA:
+        decoded_op->type = SET_I_REG;
         break;
 
     default:
@@ -190,6 +191,9 @@ void execute(op *decoded_op, state *state)
         break;
     case ADD_REG:
         state->V[decoded_op->x] += decoded_op->nn;
+        break;
+    case SET_I_REG:
+        state->I = decoded_op->nnn;
         break;
     default:
         printf("Instruction with op_type %i not yet implemented", decoded_op->type);
@@ -226,9 +230,12 @@ void init_state(state *state)
     // add reg (1, 1)
     state->memory[4] = 0x71;
     state->memory[5] = 0x01;
-    // jump (0)
-    state->memory[6] = 0x10;
+    // set i reg 0x0
+    state->memory[6] = 0xA0;
     state->memory[7] = 0x00;
+    // jump (0)
+    state->memory[8] = 0x10;
+    state->memory[9] = 0x00;
 
     state->PC = 0;
     for (int i = 0; i < REGISTER_COUNT; i++)
@@ -252,6 +259,15 @@ void print_op(op *op)
     case SET_REG:
         strcpy(op_type_str, "SET REGISTER");
         break;
+    
+    case ADD_REG:
+        strcpy(op_type_str, "ADD REGISTER");
+        break;
+    
+    case SET_I_REG:
+        strcpy(op_type_str, "SET I REGISTER");
+        break;
+
     default:
         strcpy(op_type_str, "UNKNOWN");
         break;
