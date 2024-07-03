@@ -65,6 +65,7 @@ typedef struct op
 
 void decode_nnn(char instruction[2], u_int16_t *nnn);
 void decode_x(char instruction[2], char *x);
+void decode_y(char instruction[2], char *y);
 
 void init_state(state *state);
 
@@ -132,8 +133,15 @@ void fetch(state *state, char instruction[2])
 
 void decode(char instruction[2], op *decoded_op)
 {
-    char op_type = (instruction[0] >> 4) & 0x0F;
-    switch (op_type)
+    char op_type_major = (instruction[0] >> 4) & 0x0F;
+
+    // TODO: Some simplification could be done here
+    decode_nnn(instruction, &(decoded_op->nnn));
+    decoded_op->nn = instruction[1];
+    decode_x(instruction, &(decoded_op->x));
+    decode_y(instruction, &(decoded_op->y));
+
+    switch (op_type_major)
     {
     // Flow types
     case 0:
@@ -148,18 +156,20 @@ void decode(char instruction[2], op *decoded_op)
     // Jump
     case 1:
         decoded_op->type = JUMP;
-        decode_nnn(instruction, &decoded_op->nnn);
         break;
 
     // Set Register
     case 6:
         decoded_op->type = SET_REG;
-        decode_x(instruction, &(decoded_op->x));
-        decoded_op->nn = instruction[1];
+        break;
+
+    // Add Register
+    case 7:
+        decoded_op->type = ADD_REG;
         break;
 
     default:
-        printf("Instruction with op_type: %i not yet implemented", op_type);
+        printf("Instruction with op_type: %i not yet implemented", op_type_major);
         break;
     }
 }
@@ -178,6 +188,9 @@ void execute(op *decoded_op, state *state)
     case SET_REG:
         state->V[decoded_op->x] = decoded_op->nn;
         break;
+    case ADD_REG:
+        state->V[decoded_op->x] += decoded_op->nn;
+        break;
     default:
         printf("Instruction with op_type %i not yet implemented", decoded_op->type);
     }
@@ -193,21 +206,29 @@ void decode_x(char instruction[2], char *x)
     *x = (instruction[0] & 0x0F);
 }
 
+void decode_y(char instruction[2], char *y)
+{
+    *y = (instruction[1] & 0xF0);
+}
+
 /**
  *  TODO: Actually implement some set up step
  */
 void init_state(state *state)
 {
-    // Set up program memory with a dummy clear screen instruction that loops
+    // Set up program memory with a dummy program
     // clear screen
     state->memory[0] = 0x00;
     state->memory[1] = 0xE0;
     // set reg (1, 2)
     state->memory[2] = 0x61;
     state->memory[3] = 0x02;
+    // add reg (1, 1)
+    state->memory[4] = 0x71;
+    state->memory[5] = 0x01;
     // jump (0)
-    state->memory[4] = 0x10;
-    state->memory[5] = 0x00;
+    state->memory[6] = 0x10;
+    state->memory[7] = 0x00;
 
     state->PC = 0;
     for (int i = 0; i < REGISTER_COUNT; i++)
