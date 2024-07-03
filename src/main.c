@@ -15,6 +15,8 @@
 /// Constants
 ///
 
+#define REGISTER_COUNT 16
+
 #define SCREEN_W 64
 #define SCREEN_H 32
 #define SCREEN_BYTES (SCREEN_W * SCREEN_H) / __CHAR_BIT__
@@ -34,7 +36,7 @@ typedef struct state
     u_int16_t I;
     char delay_timer;
     char audio_timer;
-    char V0, V1, V2, V3, V4, V5, V6, V7, V8, V9, VA, VB, VC, VD, VE, VF;
+    char V[REGISTER_COUNT];
 } state;
 
 ///
@@ -58,9 +60,11 @@ typedef struct op
     char x;
     char y;
     u_int16_t nnn;
+    char nn;
 } op;
 
-void decode_nnn(char instruction[2], u_int16_t* nnn);
+void decode_nnn(char instruction[2], u_int16_t *nnn);
+void decode_x(char instruction[2], char *x);
 
 void init_state(state *state);
 
@@ -111,6 +115,11 @@ int main(int argc, char *argv[])
         decode(instruction, &decoded_instruction);
         print_op(&decoded_instruction);
         execute(&decoded_instruction, &state);
+        for (int i = 0; i < REGISTER_COUNT; i++)
+        {
+            printf(" V%d: %d ", i, state.V[i]);
+        }
+        printf("\n");
     }
     return 0;
 }
@@ -142,6 +151,13 @@ void decode(char instruction[2], op *decoded_op)
         decode_nnn(instruction, &decoded_op->nnn);
         break;
 
+    // Set Register
+    case 6:
+        decoded_op->type = SET_REG;
+        decode_x(instruction, &(decoded_op->x));
+        decoded_op->nn = instruction[1];
+        break;
+
     default:
         printf("Instruction with op_type: %i not yet implemented", op_type);
         break;
@@ -153,24 +169,28 @@ void execute(op *decoded_op, state *state)
     switch (decoded_op->type)
     {
     case CLEAR_DISPLAY:
-        printf("Clearing display\n");
         for (int i = 0; i < SCREEN_BYTES; i++)
-        {
             state->screen[i] = 0;
-        }
         break;
     case JUMP:
-        printf("JUMP\n");
         state->PC = decoded_op->nnn;
+        break;
+    case SET_REG:
+        state->V[decoded_op->x] = decoded_op->nn;
         break;
     default:
         printf("Instruction with op_type %i not yet implemented", decoded_op->type);
     }
 }
 
-void decode_nnn(char instruction[2], u_int16_t* nnn)
+void decode_nnn(char instruction[2], u_int16_t *nnn)
 {
-    *nnn = ( ( (instruction[0] & 0x0F) << 4) << 6) | instruction[1];
+    *nnn = (((instruction[0] & 0x0F) << 4) << 6) | instruction[1];
+}
+
+void decode_x(char instruction[2], char *x)
+{
+    *x = (instruction[0] & 0x0F);
 }
 
 /**
@@ -182,13 +202,16 @@ void init_state(state *state)
     // clear screen
     state->memory[0] = 0x00;
     state->memory[1] = 0xE0;
+    // set reg (1, 2)
+    state->memory[2] = 0x61;
+    state->memory[3] = 0x02;
     // jump (0)
-    state->memory[2] = 0x10;
-    state->memory[3] = 0x00;
+    state->memory[4] = 0x10;
+    state->memory[5] = 0x00;
 
     state->PC = 0;
-    state->V0 = 0;
-    // ...
+    for (int i = 0; i < REGISTER_COUNT; i++)
+        state->V[i] = 0;
 }
 
 void print_op(op *op)
@@ -205,10 +228,13 @@ void print_op(op *op)
         strcpy(op_type_str, "JUMP");
         break;
 
+    case SET_REG:
+        strcpy(op_type_str, "SET REGISTER");
+        break;
     default:
         strcpy(op_type_str, "UNKNOWN");
         break;
     }
 
-    printf("Command: %s NNN: %X X: %i Y: %i\n", op_type_str, op->nnn, op->x, op->y);
+    printf("Command: %s NNN: %X, NN: %X X: %i Y: %i\n", op_type_str, op->nnn, op->nn, op->x, op->y);
 }
