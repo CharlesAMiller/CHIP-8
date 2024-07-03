@@ -57,8 +57,10 @@ typedef struct op
     enum op_type type;
     char x;
     char y;
-    char nnn[2];
+    u_int16_t nnn;
 } op;
+
+void decode_nnn(char instruction[2], u_int16_t* nnn);
 
 void init_state(state *state);
 
@@ -102,35 +104,42 @@ int main(int argc, char *argv[])
     char instruction[2] = {0, 0};
     init_state(&state);
 
-    fetch(&state, instruction); 
-    printf("Fetched: 0x%02X 0x%02X\n", instruction[0], instruction[1]);
-    decode(instruction, &decoded_instruction);
-    print_op(&decoded_instruction);
-    execute(&decoded_instruction, &state);
-
+    while (1)
+    {
+        fetch(&state, instruction);
+        printf("Fetched: 0x%02X 0x%02X\n", instruction[0], instruction[1]);
+        decode(instruction, &decoded_instruction);
+        print_op(&decoded_instruction);
+        execute(&decoded_instruction, &state);
+    }
     return 0;
 }
 
 void fetch(state *state, char instruction[2])
 {
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 2; i++)
         instruction[i] = state->memory[state->PC++];
-    }
 }
 
 void decode(char instruction[2], op *decoded_op)
 {
-    char op_type = (instruction[0] & 0xF);
+    char op_type = (instruction[0] >> 4) & 0x0F;
     switch (op_type)
     {
     // Flow types
     case 0:
-        switch (instruction[1])
+        switch (instruction[1] & 0xFF)
         {
         case 0xE0:
             decoded_op->type = CLEAR_DISPLAY;
             break;
         }
+        break;
+
+    // Jump
+    case 1:
+        decoded_op->type = JUMP;
+        decode_nnn(instruction, &decoded_op->nnn);
         break;
 
     default:
@@ -144,24 +153,39 @@ void execute(op *decoded_op, state *state)
     switch (decoded_op->type)
     {
     case CLEAR_DISPLAY:
-        printf("Clearing display");
+        printf("Clearing display\n");
         for (int i = 0; i < SCREEN_BYTES; i++)
         {
             state->screen[i] = 0;
         }
+        break;
+    case JUMP:
+        printf("JUMP\n");
+        state->PC = decoded_op->nnn;
+        break;
     default:
         printf("Instruction with op_type %i not yet implemented", decoded_op->type);
     }
 }
 
+void decode_nnn(char instruction[2], u_int16_t* nnn)
+{
+    *nnn = ( ( (instruction[0] & 0x0F) << 4) << 6) | instruction[1];
+}
+
 /**
- *  TODO: Actually implement some set up step 
+ *  TODO: Actually implement some set up step
  */
-void init_state(state* state) {
-    // Set up program memory with a dummy clear screen instruction
+void init_state(state *state)
+{
+    // Set up program memory with a dummy clear screen instruction that loops
+    // clear screen
     state->memory[0] = 0x00;
     state->memory[1] = 0xE0;
-    
+    // jump (0)
+    state->memory[2] = 0x10;
+    state->memory[3] = 0x00;
+
     state->PC = 0;
     state->V0 = 0;
     // ...
@@ -177,10 +201,14 @@ void print_op(op *op)
         strcpy(op_type_str, "CLEAR DISPLAY");
         break;
 
+    case JUMP:
+        strcpy(op_type_str, "JUMP");
+        break;
+
     default:
         strcpy(op_type_str, "UNKNOWN");
         break;
     }
 
-    printf("Command: %s X: %i Y: %i\n", op_type_str, op->x, op->y);
+    printf("Command: %s NNN: %X X: %i Y: %i\n", op_type_str, op->nnn, op->x, op->y);
 }
