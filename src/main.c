@@ -118,9 +118,9 @@ int main(int argc, char *argv[])
         execute(&decoded_instruction, &state);
         for (int i = 0; i < REGISTER_COUNT; i++)
         {
-            printf(" V%d: %d ", i, state.V[i]);
+            printf(" V%d: %x ", i, state.V[i]);
         }
-        printf("\n");
+        printf("I: %x\n", state.I);
     }
     return 0;
 }
@@ -169,6 +169,10 @@ void decode(char instruction[2], op *decoded_op)
         decoded_op->type = SET_I_REG;
         break;
 
+    case 0xD:
+        decoded_op->type = DISPLAY;
+    break;
+
     default:
         printf("Instruction with op_type: %i not yet implemented", op_type_major);
         break;
@@ -177,6 +181,9 @@ void decode(char instruction[2], op *decoded_op)
 
 void execute(op *decoded_op, state *state)
 {
+    char *x = &(state->V[decoded_op->x]);
+    char *y = &(state->V[decoded_op->y]);
+
     switch (decoded_op->type)
     {
     case CLEAR_DISPLAY:
@@ -187,22 +194,28 @@ void execute(op *decoded_op, state *state)
         state->PC = decoded_op->nnn;
         break;
     case SET_REG:
-        state->V[decoded_op->x] = decoded_op->nn;
+        *x = decoded_op->nn;
         break;
     case ADD_REG:
-        state->V[decoded_op->x] += decoded_op->nn;
+        *x += decoded_op->nn;
         break;
     case SET_I_REG:
         state->I = decoded_op->nnn;
+        break;
+    case DISPLAY:
+        memcpy(&state->screen, &state->memory[state->I], SCREEN_BYTES);
+        for (int i = 0; i < SCREEN_BYTES; i++)
+            printf("%x\n", state->screen[i]);
         break;
     default:
         printf("Instruction with op_type %i not yet implemented", decoded_op->type);
     }
 }
+    // *nnn = ((((instruction[0] & 0xF) << 4) << 6) | instruction[1]) & 0xFFF;
 
 void decode_nnn(char instruction[2], u_int16_t *nnn)
 {
-    *nnn = (((instruction[0] & 0x0F) << 4) << 6) | instruction[1];
+    *nnn = ((((unsigned char) instruction[0]) & 0x0F) << 8) | (unsigned char) instruction[1];
 }
 
 void decode_x(char instruction[2], char *x)
@@ -212,7 +225,7 @@ void decode_x(char instruction[2], char *x)
 
 void decode_y(char instruction[2], char *y)
 {
-    *y = (instruction[1] & 0xF0);
+    *y = (instruction[1] & 0xF0) >> 4;
 }
 
 /**
@@ -220,6 +233,9 @@ void decode_y(char instruction[2], char *y)
  */
 void init_state(state *state)
 {
+    for (int i = 0; i < RAM_SIZE; i++)
+        state->memory[i] = 0;
+
     // Set up program memory with a dummy program
     // clear screen
     state->memory[0] = 0x00;
@@ -230,12 +246,19 @@ void init_state(state *state)
     // add reg (1, 1)
     state->memory[4] = 0x71;
     state->memory[5] = 0x01;
-    // set i reg 0x0
-    state->memory[6] = 0xA0;
-    state->memory[7] = 0x00;
+    // set i reg (2000)
+    state->memory[6] = 0xA7;
+    state->memory[7] = 0xD0;
+    // display (0, 1, 1)
+    state->memory[8] = 0xD1;
+    state->memory[9] = 0x11;
     // jump (0)
-    state->memory[8] = 0x10;
-    state->memory[9] = 0x00;
+    state->memory[10] = 0x10;
+    state->memory[11] = 0x00;
+
+    
+    for (int i = 0; i < SCREEN_BYTES; i++) 
+        state->memory[2000 + i] = 0xFF;
 
     state->PC = 0;
     for (int i = 0; i < REGISTER_COUNT; i++)
@@ -266,6 +289,10 @@ void print_op(op *op)
     
     case SET_I_REG:
         strcpy(op_type_str, "SET I REGISTER");
+        break;
+    
+    case DISPLAY: 
+        strcpy(op_type_str, "DISPLAY");
         break;
 
     default:
