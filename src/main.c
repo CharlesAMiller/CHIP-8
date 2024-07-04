@@ -19,7 +19,12 @@
 
 #define SCREEN_W 64
 #define SCREEN_H 32
-#define SCREEN_BYTES (SCREEN_W * SCREEN_H) / __CHAR_BIT__
+#define SCREEN_BYTES ((SCREEN_W * SCREEN_H) / __CHAR_BIT__)
+
+#define H_OFFSET (SCREEN_H / __CHAR_BIT__)
+
+#define UNSET_PIXEL 65 
+#define SET_PIXEL 66 
 
 // 4 KB
 #define RAM_SIZE 4096
@@ -61,6 +66,7 @@ typedef struct op
     char y;
     u_int16_t nnn;
     char nn;
+    char n;
 } op;
 
 void decode_nnn(char instruction[2], u_int16_t *nnn);
@@ -94,6 +100,9 @@ void decode(char instruction[2], op *decoded_op);
  */
 void execute(op *decoded_op, state *state);
 
+
+void print_screen(char screen[SCREEN_BYTES]);
+
 /**
  * A helper that pretty-prints the given operation
  *
@@ -116,6 +125,8 @@ int main(int argc, char *argv[])
         decode(instruction, &decoded_instruction);
         print_op(&decoded_instruction);
         execute(&decoded_instruction, &state);
+        if (decoded_instruction.type == DISPLAY) 
+            print_screen(state.screen);
         for (int i = 0; i < REGISTER_COUNT; i++)
         {
             printf(" V%d: %x ", i, state.V[i]);
@@ -140,6 +151,7 @@ void decode(char instruction[2], op *decoded_op)
     decoded_op->nn = instruction[1];
     decode_x(instruction, &(decoded_op->x));
     decode_y(instruction, &(decoded_op->y));
+    decoded_op->n = instruction[1] & 0x0F;
 
     switch (op_type_major)
     {
@@ -204,17 +216,29 @@ void execute(op *decoded_op, state *state)
         break;
     case DISPLAY:
         memcpy(&state->screen, &state->memory[state->I], SCREEN_BYTES);
-        for (int i = 0; i < SCREEN_BYTES; i++)
-            printf("%x\n", state->screen[i]);
+        int unsetPixel = 0;
+        int start_idx = (( *y * H_OFFSET ) + *x);
+        int end_idx = start_idx + (decoded_op->n * H_OFFSET);
+        for (int i = start_idx; i <= end_idx; i += H_OFFSET) 
+        {
+            printf("i: %d, start: %d, end: %d\n", i, start_idx, end_idx);
+            if (i >= SCREEN_BYTES) 
+                break;
+
+            state->screen[i] |= 0xFF; 
+            if ( ((unsigned char) state->screen[i]) != 0xFF) 
+                unsetPixel = 1;
+        }
+        state->V[0xF] = unsetPixel;
         break;
     default:
         printf("Instruction with op_type %i not yet implemented", decoded_op->type);
     }
 }
-    // *nnn = ((((instruction[0] & 0xF) << 4) << 6) | instruction[1]) & 0xFFF;
 
 void decode_nnn(char instruction[2], u_int16_t *nnn)
 {
+    // TODO: Change usage of chars to u_int8_t? This would save us the trouble of casting
     *nnn = ((((unsigned char) instruction[0]) & 0x0F) << 8) | (unsigned char) instruction[1];
 }
 
@@ -249,20 +273,46 @@ void init_state(state *state)
     // set i reg (2000)
     state->memory[6] = 0xA7;
     state->memory[7] = 0xD0;
-    // display (0, 1, 1)
-    state->memory[8] = 0xD1;
-    state->memory[9] = 0x11;
-    // jump (0)
-    state->memory[10] = 0x10;
+    // set reg (3, 32)
+    state->memory[8] = 0x63;
+    state->memory[9] = 0x20;
+    // set reg (4, 0)
+    state->memory[10] = 0x64;
     state->memory[11] = 0x00;
+    // display (0, 1, 1)
+    state->memory[12] = 0xD3;
+    state->memory[13] = 0x41;
+    // add reg (4, 1)
+    state->memory[14] = 0x74;
+    state->memory[15] = 0x01;
+    // jump (12)
+    state->memory[16] = 0x10;
+    state->memory[17] = 0x0C;
 
     
-    for (int i = 0; i < SCREEN_BYTES; i++) 
-        state->memory[2000 + i] = 0xFF;
+    // for (int i = 0; i < SCREEN_BYTES; i++) 
+        // state->memory[2000 + i] = 0xFF;
 
     state->PC = 0;
     for (int i = 0; i < REGISTER_COUNT; i++)
         state->V[i] = 0;
+}
+
+void print_screen(char screen[SCREEN_BYTES]) 
+{
+    char pixel_mask = 0b10000000;
+    for (int i = 0; i < SCREEN_BYTES; i++)
+    {
+        if (i % H_OFFSET == 0)
+            printf("\n");
+
+        unsigned char pixels = (unsigned char) screen[i];
+        printf("pixels: %x", pixels);
+        for ( ; pixels > 0; pixels <<= 1) 
+            // printf("Reached");
+            printf("%c", ((pixels & pixel_mask) == 1) ? 'A': 'B');   
+    
+    }
 }
 
 void print_op(op *op)
