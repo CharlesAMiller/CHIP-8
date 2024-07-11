@@ -61,13 +61,13 @@ void run(chip8 *cpu)
     decode(instruction, &decoded_instruction);
     print_op(&decoded_instruction);
     execute(&decoded_instruction, state, cpu->peripherals);
-    if (decoded_instruction.type == DISPLAY)
-        print_screen(state->screen);
+    // if (decoded_instruction.type == DISPLAY)
+        // print_screen(state->screen);
     for (int i = 0; i < REGISTER_COUNT; i++)
     {
         printf(" V%d: %x ", i, state->V[i]);
     }
-    printf("I: %x\n", state->I);
+    printf("I: %x PC: %x \n", state->I, state->PC);
 }
 
 void fetch(state *state, u_int8_t instruction[2])
@@ -319,19 +319,19 @@ void init_state(state *state, u_int8_t *memory, u_int8_t *program)
     memset(state->screen, 0, SCREEN_BYTES);
 }
 
-void print_screen(u_int8_t screen[SCREEN_BYTES])
-{
-    u_int8_t pixel_mask = 0b10000000;
-    for (int i = 0; i < SCREEN_BYTES; i++)
-    {
-        if (i % H_OFFSET == 0)
-            printf("\n%d\t", i / H_OFFSET);
+// void print_screen(u_int8_t screen[SCREEN_BYTES])
+// {
+//     u_int8_t pixel_mask = 0b10000000;
+//     for (int i = 0; i < SCREEN_BYTES; i++)
+//     {
+//         if (i % H_OFFSET == 0)
+//             printf("\n%d\t", i / H_OFFSET);
 
-        u_int8_t pixels = screen[i];
-        for (int i = 8; i > 0; i--, pixels <<= 1)
-            printf("%c", ((pixels & pixel_mask) != 0) ? SET_PIXEL : UNSET_PIXEL);
-    }
-}
+//         u_int8_t pixels = screen[i];
+//         for (int i = 8; i > 0; i--, pixels <<= 1)
+//             printf("%c", ((pixels & pixel_mask) != 0) ? SET_PIXEL : UNSET_PIXEL);
+//     }
+// }
 
 void print_op(op *op)
 {

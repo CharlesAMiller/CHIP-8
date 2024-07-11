@@ -1,1 +1,9 @@
+# Compiled files or outputs
 *.out
+*.o
+*.gch
+*main
+*chip8
+
+# Editor specific
+/.vscode
