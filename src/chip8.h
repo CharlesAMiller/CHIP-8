@@ -5,6 +5,7 @@
 ///
 
 #define REGISTER_COUNT 16
+#define STACK_COUNT 16
 
 #define SCREEN_W 64
 #define SCREEN_H 32
@@ -30,11 +31,12 @@
 enum op_type
 {
     CLEAR_DISPLAY,
+    RET,
     JUMP,
+    CALL,
     SET_REG,
     ADD_REG,
     SET_I_REG,
-    DISPLAY,
     IF_EQ,
     IF_NEQ,
     IF_EQ_REG,
@@ -50,6 +52,9 @@ enum op_type
     SKIP_NEQ,
     BNNN,
     RANDOM,
+    DISPLAY,
+    SKIP_IF_KEY,
+    SKIP_IF_NKEY,
     GET_DELAY,
     GET_KEY,
     SET_DELAY,
@@ -85,9 +90,11 @@ typedef struct state
     u_int8_t *memory;
     u_int8_t screen[SCREEN_BYTES];
     u_int16_t PC;
+    u_int8_t SP;
     u_int16_t I;
     u_int8_t delay_timer;
     u_int8_t audio_timer;
+    u_int16_t stack[STACK_COUNT];
     u_int8_t V[REGISTER_COUNT];
 } state;
 

@@ -9,6 +9,7 @@
 
 enum op_type op_type_lookup[0xE] = {
     [1] = JUMP,
+    [2] = CALL,
     [3] = IF_EQ,
     [4] = IF_NEQ,
     [5] = IF_EQ_REG,
@@ -61,8 +62,14 @@ void run(chip8 *cpu)
     decode(instruction, &decoded_instruction);
     print_op(&decoded_instruction);
     execute(&decoded_instruction, state, cpu->peripherals);
+
+    if (state->audio_timer > 0) 
+    {
+        cpu->peripherals->noise();
+        state->audio_timer--;
+    }
     // if (decoded_instruction.type == DISPLAY)
-        // print_screen(state->screen);
+    print_screen(state->screen);
     for (int i = 0; i < REGISTER_COUNT; i++)
     {
         printf(" V%d: %x ", i, state->V[i]);
@@ -95,11 +102,12 @@ void decode(u_int8_t instruction[2], op *decoded_op)
         case 0xE0:
             decoded_op->type = CLEAR_DISPLAY;
             break;
-        }
+        case 0xEE:
+            decoded_op->type = RET;
         break;
+        }
 
-    case 1:
-    case 3 ... 7:
+    case 1 ... 7:
     case 9 ... 0xD:
         decoded_op->type = op_type_lookup[op_type_major];
         break;
@@ -107,7 +115,18 @@ void decode(u_int8_t instruction[2], op *decoded_op)
     case 8:
         decoded_op->type = bit_op_type_lookup[instruction[1] & 0xFF];
         break;
-
+    
+    case 0xE:
+        switch (instruction[1] &0xFF) 
+        {
+        case 0x9E:
+            decoded_op->type = SKIP_IF_KEY;
+            break;
+        case 0xA1:
+            decoded_op->type = SKIP_IF_NKEY;
+            break;
+        }
+    
     case 0xF:
         switch (instruction[1] & 0xFF)
         {
@@ -154,12 +173,17 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
     switch (decoded_op->type)
     {
     case CLEAR_DISPLAY:
-        for (int i = 0; i < SCREEN_BYTES; i++)
-            state->screen[i] = 0;
+        memset(state->screen, 0, SCREEN_BYTES);
+        break;
+    case RET:
+        state->PC = state->stack[state->SP--];
         break;
     case JUMP:
         state->PC = decoded_op->nnn;
         break;
+    case CALL:
+        state->stack[state->SP++] = state->PC;
+        state->PC = decoded_op->nnn;
     case SET_REG:
         *x = decoded_op->nn;
         break;
@@ -224,6 +248,12 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
     case RANDOM:
         *x = peripherals->random() & decoded_op->nn;
         break;
+    case SKIP_IF_KEY:
+        state->PC += peripherals->is_key_pressed(*x) ? 2 : 0;
+        break;
+    case SKIP_IF_NKEY:
+        state->PC += !peripherals->is_key_pressed(*x) ? 2 : 0;
+        break;
     case GET_DELAY:
         *x = state->delay_timer;
         break;
@@ -248,12 +278,10 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
         state->memory[state->I + 2] = *x % 10;        // 1's place
         break;
     case REG_DUMP:
-        for (int i = 0; i < REGISTER_COUNT; i++)
-            state->memory[state->I + i] = state->V[i];
+        memcpy(&state->memory[state->I], state->V, REGISTER_COUNT);
         break;
     case REG_LOAD:
-        for (int i = 0; i < REGISTER_COUNT; i++)
-            state->V[i] = state->memory[state->I + i];
+        memcpy(&state->V, &state->memory[state->I], REGISTER_COUNT);
         break;
     default:
         printf("Instruction with op_type %i not yet implemented", decoded_op->type);
@@ -307,10 +335,13 @@ void init_state(state *state, u_int8_t *memory, u_int8_t *program)
     memcpy(&state->memory[DIGIT_SPRITES_OFFSET], digit_sprites_data, sizeof(digit_sprites_data));
     // Store the given program at the correct place in memory
     memcpy(&state->memory[PROGRAM_OFFSET], program, PROGRAM_SIZE);
+    // Zero the stack
+    memset(state->stack, 0, STACK_COUNT);
 
     // Init registers
     state->PC = PROGRAM_OFFSET;
     state->I = 0;
+    state->SP = 0;
     memset(state->V, 0, REGISTER_COUNT);
 
     // Init peripherals
@@ -319,19 +350,19 @@ void init_state(state *state, u_int8_t *memory, u_int8_t *program)
     memset(state->screen, 0, SCREEN_BYTES);
 }
 
-// void print_screen(u_int8_t screen[SCREEN_BYTES])
-// {
-//     u_int8_t pixel_mask = 0b10000000;
-//     for (int i = 0; i < SCREEN_BYTES; i++)
-//     {
-//         if (i % H_OFFSET == 0)
-//             printf("\n%d\t", i / H_OFFSET);
+void print_screen(u_int8_t screen[SCREEN_BYTES])
+{
+    u_int8_t pixel_mask = 0b10000000;
+    for (int i = 0; i < SCREEN_BYTES; i++)
+    {
+        if (i % H_OFFSET == 0)
+            printf("\n%d\t", i / H_OFFSET);
 
-//         u_int8_t pixels = screen[i];
-//         for (int i = 8; i > 0; i--, pixels <<= 1)
-//             printf("%c", ((pixels & pixel_mask) != 0) ? SET_PIXEL : UNSET_PIXEL);
-//     }
-// }
+        u_int8_t pixels = screen[i];
+        for (int i = 8; i > 0; i--, pixels <<= 1)
+            printf("%c", ((pixels & pixel_mask) != 0) ? SET_PIXEL : UNSET_PIXEL);
+    }
+}
 
 void print_op(op *op)
 {

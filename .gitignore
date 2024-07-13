@@ -4,6 +4,10 @@
 *.gch
 *main
 *chip8
+*.ch8
+
+# Bogus files
+*.DS_Store
 
 # Editor specific
 /.vscode
