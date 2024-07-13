@@ -100,7 +100,7 @@ typedef struct state
 
 typedef struct peripherals
 {
-    // void (*display)(u_int8_t**);
+    void (*display)(u_int8_t*);
     void (*noise)();
     u_int8_t (*random)();
     u_int8_t (*is_key_pressed)(u_int8_t);
@@ -151,7 +151,7 @@ void run(chip8 *cpu);
 
 chip8 init(chip8_config *config);
 
-void print_screen(u_int8_t screen[SCREEN_BYTES]);
+void print_screen(u_int8_t *screen);
 
 void display(state *state, op *decoded_op);
 

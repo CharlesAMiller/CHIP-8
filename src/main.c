@@ -21,9 +21,14 @@ u_int8_t is_key_pressed(u_int8_t key);
 u_int8_t rand_byte();
 
 void load_program(char *file_name, u_int8_t *program);
-void draw_screen(u_int8_t *screen, sfImage *image);
+void draw_screen(u_int8_t *screen);
 void generateSineWave(int16_t *samples, size_t sampleCount, float frequency, float amplitude, unsigned sampleRate);
 sfSoundBuffer *createSineWaveBuffer(float frequency, float amplitude, unsigned sampleRate, float duration);
+
+sfImage *image;
+sfTexture *texture;
+sfSprite *sprite;
+sfWindow *window;
 
 sfKeyCode keyMap[16] = {
     [0] = sfKeyNum0,
@@ -50,6 +55,7 @@ int main(int argc, char *argv[])
 
     // Setup
     peripherals peripherals;
+    peripherals.display = &draw_screen;
     peripherals.get_key_pressed = &get_key_pressed;
     peripherals.is_key_pressed = &is_key_pressed;
     peripherals.random = &rand_byte;
@@ -67,16 +73,17 @@ int main(int argc, char *argv[])
     chip8 cpu = init(&config);
 
     const sfVideoMode mode = {SCREEN_W * 16, SCREEN_H * 16, 32};
-    sfRenderWindow *window = sfRenderWindow_create(mode, "CHIP-8", sfResize | sfClose, NULL);
+    window = sfRenderWindow_create(mode, "CHIP-8", sfResize | sfClose, NULL);
 
-    sfImage *image = sfImage_create(SCREEN_W, SCREEN_H);
+    image = sfImage_create(SCREEN_W, SCREEN_H);
     sfImage_createMaskFromColor(image, sfBlack, 0);
 
     if (!window)
         return EXIT_FAILURE;
 
-    sfTexture *texture = sfTexture_createFromImage(image, NULL);
-    sfSprite *sprite = sfSprite_create();
+    texture = sfTexture_createFromImage(image, NULL);
+    sprite = sfSprite_create();
+    
     sfSprite_setTexture(sprite, texture, sfTrue);
     sfVector2f scale;
     scale.x = 8;
@@ -94,19 +101,13 @@ int main(int argc, char *argv[])
                 sfRenderWindow_close(window);
         }
 
-        sfRenderWindow_clear(window, sfBlack);
-
-        draw_screen(cpu.state.screen, image);
-
-        sfTexture_updateFromImage(texture, image, 0, 0);
-
-        sfRenderWindow_drawSprite(window, sprite, NULL);
-
-        sfRenderWindow_display(window);
+        // sfRenderWindow_clear(window, sfBlack);
+        sfTime sleepTime = { 500 };
+        sfSleep(sleepTime);
     }
 }
 
-void draw_screen(u_int8_t *screen, sfImage *image)
+void draw_screen(u_int8_t *screen)
 {
     u_int8_t x = 0;
     u_int8_t y = 0;
@@ -131,6 +132,11 @@ void draw_screen(u_int8_t *screen, sfImage *image)
             x++;
         }
     }
+
+    sfTexture_updateFromImage(texture, image, 0, 0);
+    sfRenderWindow_drawSprite(window, sprite, NULL);
+    sfRenderWindow_display(window);
+
 }
 
 // Still a placeholder

@@ -58,9 +58,9 @@ void run(chip8 *cpu)
     state *state = &((*cpu).state);
 
     fetch(state, instruction);
-    printf("Fetched: 0x%02X 0x%02X\n", instruction[0], instruction[1]);
+    // printf("Fetched: 0x%02X 0x%02X\n", instruction[0], instruction[1]);
     decode(instruction, &decoded_instruction);
-    print_op(&decoded_instruction);
+    // print_op(&decoded_instruction);
     execute(&decoded_instruction, state, cpu->peripherals);
 
     if (state->audio_timer > 0) 
@@ -68,13 +68,13 @@ void run(chip8 *cpu)
         cpu->peripherals->noise();
         state->audio_timer--;
     }
-    // if (decoded_instruction.type == DISPLAY)
-    print_screen(state->screen);
-    for (int i = 0; i < REGISTER_COUNT; i++)
-    {
-        printf(" V%d: %x ", i, state->V[i]);
-    }
-    printf("I: %x PC: %x \n", state->I, state->PC);
+    if (decoded_instruction.type == DISPLAY)
+        print_screen(state->screen);
+    // for (int i = 0; i < REGISTER_COUNT; i++)
+    // {
+    //     printf(" V%d: %x ", i, state->V[i]);
+    // }
+    // printf("I: %x PC: %x \n", state->I, state->PC);
 }
 
 void fetch(state *state, u_int8_t instruction[2])
@@ -195,6 +195,7 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
         break;
     case DISPLAY:
         display(state, decoded_op);
+        peripherals->display(state->screen);
         break;
     case IF_EQ:
         state->PC += (*x == decoded_op->nn) ? 2 : 0;
@@ -290,28 +291,29 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
 
 void display(state *state, op *decoded_op)
 {
-    u_int8_t *x = &(state->V[decoded_op->x]);
-    u_int8_t *y = &(state->V[decoded_op->y]);
+    u_int8_t x = (state->V[decoded_op->x]) % SCREEN_W;
+    u_int8_t y = (state->V[decoded_op->y]) % SCREEN_H;
 
     // Used to determine if the operation resulted in ANY pixels were unset/toggled off
-    int unsetPixel = 0;
-    int start_idx = (((*y % SCREEN_H) * H_OFFSET) + *x);
+    int unset_pixel = 0;
+    int start_idx = ((y * H_OFFSET) + x);
     int end_idx = start_idx + (decoded_op->n * H_OFFSET);
 
-    u_int8_t prev_screen_val;
+    u_int8_t sprite_buffer;
 
     for (int i = start_idx, n = 0; i < end_idx; i += H_OFFSET, n++)
     {
         if (i >= SCREEN_BYTES)
             break;
 
-        prev_screen_val = state->screen[i];
-        state->screen[i] ^= state->memory[state->I + n];
-        if (state->screen[i] < prev_screen_val)
-            unsetPixel = 1;
+        sprite_buffer = state->screen[i] ^ state->memory[state->I + n];
+        if ( (state->screen[i] & ~sprite_buffer) != 0) 
+            unset_pixel = 1;
+
+        state->screen[i] = sprite_buffer;
     }
-    printf("setPixel, %d", unsetPixel);
-    state->V[0xF] = unsetPixel;
+    printf("setPixel, %d", unset_pixel);
+    state->V[0xF] = unset_pixel;
 }
 
 chip8 init(chip8_config *config)
@@ -350,7 +352,7 @@ void init_state(state *state, u_int8_t *memory, u_int8_t *program)
     memset(state->screen, 0, SCREEN_BYTES);
 }
 
-void print_screen(u_int8_t screen[SCREEN_BYTES])
+void print_screen(u_int8_t *screen)
 {
     u_int8_t pixel_mask = 0b10000000;
     for (int i = 0; i < SCREEN_BYTES; i++)
