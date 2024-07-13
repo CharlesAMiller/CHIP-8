@@ -12,7 +12,7 @@
 #define SCREEN_BYTES ((SCREEN_W * SCREEN_H) / __CHAR_BIT__)
 #define DIGIT_SPRITES_OFFSET 0
 
-#define H_OFFSET (SCREEN_H / __CHAR_BIT__)
+#define H_OFFSET (SCREEN_W / __CHAR_BIT__)
 
 #define UNSET_PIXEL '-'
 #define SET_PIXEL '#'

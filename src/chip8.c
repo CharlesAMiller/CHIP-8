@@ -291,7 +291,7 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
 
 void display(state *state, op *decoded_op)
 {
-    u_int8_t x = (state->V[decoded_op->x]) % SCREEN_W;
+    u_int8_t x = ((state->V[decoded_op->x]) % SCREEN_W) / 8;
     u_int8_t y = (state->V[decoded_op->y]) % SCREEN_H;
 
     // Used to determine if the operation resulted in ANY pixels were unset/toggled off
