@@ -127,9 +127,8 @@ void draw_screen(u_int8_t *screen)
         color = sfBlack;
         for (int j = 8; j > 0; j--, pixels <<= 1)
         {
-            sfImage_setPixel(image, x, y, color);
             color = ((pixels & 0b10000000) != 0) ? sfWhite : sfBlack;
-            x++;
+            sfImage_setPixel(image, x++, y, color);
         }
     }
 
