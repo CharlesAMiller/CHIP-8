@@ -2,7 +2,7 @@ CC = clang
 CFLAGS = -I/opt/homebrew/Cellar/csfml/2.6.1/include
 LDFLAGS = -L/opt/homebrew/lib -lcsfml-graphics -lcsfml-window -lcsfml-system -lcsfml-audio
 
-SRCS = main.c chip8.c
+SRCS = main.c chip8.c audio.c io.c graphics.c
 OBJS = $(SRCS:.c=.o)
 TARGET = chip8 
 
