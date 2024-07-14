@@ -68,13 +68,19 @@ void run(chip8 *cpu)
         cpu->peripherals->noise();
         state->audio_timer--;
     }
+    if (state->delay_timer > 0) 
+        state->delay_timer--;
+
     if (decoded_instruction.type == DISPLAY)
         print_screen(state->screen);
     // for (int i = 0; i < REGISTER_COUNT; i++)
     // {
     //     printf(" V%d: %x ", i, state->V[i]);
     // }
-    // printf("I: %x PC: %x \n", state->I, state->PC);
+    // printf("I: %x PC: %x SP: %d, \nstack:", state->I, state->PC, state->SP);
+    // for (int i = 0; i < STACK_COUNT; i++)
+    //     printf(" %d,", state->stack[i]);
+    // printf("\n");
 }
 
 void fetch(state *state, u_int8_t instruction[2])
@@ -104,7 +110,7 @@ void decode(u_int8_t instruction[2], op *decoded_op)
             break;
         case 0xEE:
             decoded_op->type = RET;
-            break;
+        break;
         }
 
     case 1 ... 7:
@@ -115,9 +121,9 @@ void decode(u_int8_t instruction[2], op *decoded_op)
     case 8:
         decoded_op->type = bit_op_type_lookup[instruction[1] & 0xFF];
         break;
-
+    
     case 0xE:
-        switch (instruction[1] & 0xFF)
+        switch (instruction[1] & 0xFF) 
         {
         case 0x9E:
             decoded_op->type = SKIP_IF_KEY;
@@ -126,7 +132,7 @@ void decode(u_int8_t instruction[2], op *decoded_op)
             decoded_op->type = SKIP_IF_NKEY;
             break;
         }
-
+    
     case 0xF:
         switch (instruction[1] & 0xFF)
         {
@@ -176,13 +182,16 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
         memset(state->screen, 0, SCREEN_BYTES);
         break;
     case RET:
-        state->PC = state->stack[state->SP--];
+        state->PC = state->stack[state->SP];
+        state->stack[state->SP] = 0;
+        state->SP -= (state->SP > 0) ? 1 : 0;
         break;
     case JUMP:
         state->PC = decoded_op->nnn;
         break;
     case CALL:
-        state->stack[state->SP++] = state->PC;
+        state->stack[state->SP] = state->PC;
+        state->SP += (state->SP < 15) ? 1 : 0;
         state->PC = decoded_op->nnn;
     case SET_REG:
         *x = decoded_op->nn;
@@ -226,7 +235,7 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
     case SUB:
         // Borrow
         state->V[0xF] = (*x > *y);
-        *x += *y;
+        *x -= *y;
         break;
     case SHIFT_RIGHT:
         state->V[0xF] = *x & 0x01;
@@ -250,10 +259,10 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
         *x = peripherals->random() & decoded_op->nn;
         break;
     case SKIP_IF_KEY:
-        state->PC += peripherals->is_key_pressed(*x) ? 2 : 0;
+        state->PC += (peripherals->is_key_pressed(*x) == 1) ? 2 : 0;
         break;
     case SKIP_IF_NKEY:
-        state->PC += !peripherals->is_key_pressed(*x) ? 2 : 0;
+        state->PC += (peripherals->is_key_pressed(*x) == 0) ? 2 : 0;
         break;
     case GET_DELAY:
         *x = state->delay_timer;
@@ -292,7 +301,7 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
 void display(state *state, op *decoded_op)
 {
     u_int8_t x = ((state->V[decoded_op->x]) % SCREEN_W) / 8;
-    u_int8_t x_off = ((state->V[decoded_op->x]) % SCREEN_W) % 8;
+    u_int8_t x_off = ((state->V[decoded_op->x]) % SCREEN_W) % 8; 
     u_int8_t y = (state->V[decoded_op->y]) % SCREEN_H;
 
     // Used to determine if the operation resulted in ANY pixels were unset/toggled off
@@ -307,20 +316,20 @@ void display(state *state, op *decoded_op)
         if (i >= SCREEN_BYTES)
             break;
 
-        screen_buffer = state->screen[i] ^ (state->memory[state->I + n] >> x_off);
+        screen_buffer = state->screen[i] ^ (state->memory[state->I + n] >> x_off); 
 
-        if ((state->screen[i] & ~screen_buffer) != 0)
+        if ( (state->screen[i] & ~screen_buffer) != 0)
             unset_pixel = 1;
 
         state->screen[i] = screen_buffer;
-
-        if (x_off > 0 && (i + 1) % H_OFFSET != 0)
+       
+        if (x_off > 0 && (i + 1) % H_OFFSET != 0) 
         {
-            screen_buffer = state->screen[i + 1] ^ (state->memory[state->I + n] << (8 - x_off));
+            screen_buffer = state->screen[i + 1] ^ (state->memory[state-> I + n] << (8 - x_off));
 
             if ((state->screen[i + 1] & ~screen_buffer) != 0)
                 unset_pixel = 1;
-
+            
             state->screen[i + 1] = screen_buffer;
         }
     }
