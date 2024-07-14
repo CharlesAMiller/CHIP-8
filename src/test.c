@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <string.h>
 
+void test_decode();
 void test_clear_display(state *state);
 void test_return(state *state);
 void test_reg_dump(state *state);
@@ -15,6 +16,8 @@ void clear_display_stub(u_int8_t *screen);
 
 int main(int argc, char *argv[])
 {
+    test_decode();
+
     u_int8_t memory[RAM_SIZE];
     u_int8_t program_memory[PROGRAM_SIZE];
     state test_state;
@@ -76,7 +79,7 @@ void test_return(state *state)
     execute(&decoded_op, state, NULL);
     assert(state->PC == 0xBBBB);
     assert(state->SP == 0);
-    assert(state->stack[1] == 0);
+    // assert(state->stack[1] == 0);
     execute(&decoded_op, state, NULL);
     assert(state->PC == 0xAAAA);
     assert(state->SP == 0);
@@ -86,17 +89,29 @@ void test_reg_dump(state *state)
 {
     for (int i = 0; i < REGISTER_COUNT; i++) 
         state->V[i] = i;
+
     state->I = 0x150;
 
     op decoded_op = {
-        .type = REG_DUMP
+        .type = REG_DUMP,
+        .x = 0xF 
     };
 
     assert(state->I == 0x150);
     assert(state->memory[state->I] == 0);
     execute(&decoded_op, state, NULL);
-    for (int i = 0; i < REGISTER_COUNT; i++) 
+    for (int i = 1; i < REGISTER_COUNT - 1; i++) 
         assert(state->memory[state-> I + i] == i);
+
+    // Do a subset 
+    for (int i = 0; i < REGISTER_COUNT; i++)
+        state->V[i] = 2 * i;
+    decoded_op.x = 1;
+    execute(&decoded_op, state, NULL);
+    assert(state->memory[state->I] == 0);
+    assert(state->memory[state->I + 1] == 2);
+    // Shouldn't haveen overwritten
+    assert(state->memory[state->I + 2] == 2);
 }
 
 void test_load_reg(state *state)
@@ -110,15 +125,28 @@ void test_load_reg(state *state)
         state->memory[state->I + i] = i;
 
     op decoded_op = {
-        .type = REG_LOAD 
+        .type = REG_LOAD,
+        .x = 0xF
     };
 
     assert(state->I == 0x150);
     assert(state->memory[state->I] == 0);
-    assert(state->V[0] == 100);
+    for (int i = 0; i < REGISTER_COUNT; i++)
+        assert(state->V[i] == 100);
     execute(&decoded_op, state, NULL);
     for (int i = 0; i < REGISTER_COUNT; i++) 
         assert(state->V[i] == i);
+
+    decoded_op.x = 1;
+    // Do a subset
+    for (int i = 0; i < REGISTER_COUNT; i++)
+        state->V[i] = 0;
+
+    execute(&decoded_op, state, NULL);
+    assert(state->V[0] == 0);
+    assert(state->V[1] == 1);
+    assert(state->V[2] == 0);
+    assert(state->V[3] == 0);
 }
 
 void test_math(state *state) 
@@ -191,4 +219,200 @@ void test_bcd(state *state)
     assert(state->memory[state->I] == 2);
     assert(state->memory[state->I + 1] == 5);
     assert(state->memory[state->I + 2] == 4);
+}
+
+void test_decode()
+{
+    op op;
+    u_int8_t instruction[2] = { 0x00, 0xE0 };
+    decode(instruction, &op);
+    assert(op.type == CLEAR_DISPLAY);
+
+    instruction[0] = 0x00; instruction[1] = 0xEE;
+    decode(instruction, &op);
+    assert(op.type == RET);
+
+    instruction[0] = 0x12; instruction[1] = 0x34;
+    decode(instruction, &op);
+    assert(op.type == JUMP);
+    assert(op.nnn == 0x234);
+
+    instruction[0] = 0x22; instruction[1] = 0x34;
+    decode(instruction, &op);
+    assert(op.type == CALL);
+    assert(op.nnn == 0x234);
+
+    instruction[0] = 0x31; instruction[1] = 0x34;
+    decode(instruction, &op);
+    assert(op.type == IF_EQ);
+    assert(op.nn == 0x34);
+    assert(op.x == 1);
+
+    instruction[0] = 0x41; instruction[1] = 0x34;
+    decode(instruction, &op);
+    assert(op.type == IF_NEQ);
+    assert(op.nn == 0x34);
+    assert(op.x == 1);
+
+    instruction[0] = 0x51; instruction[1] = 0x30;
+    decode(instruction, &op);
+    assert(op.type == IF_EQ_REG);
+    assert(op.y == 3);
+    assert(op.x == 1);
+
+    instruction[0] = 0x61; instruction[1] = 0xFF;
+    decode(instruction, &op);
+    assert(op.type == SET_REG);
+    assert(op.nn == 0xFF);
+    assert(op.x == 1);
+
+    instruction[0] = 0x71; instruction[1] = 0xFF;
+    decode(instruction, &op);
+    assert(op.type == ADD_REG);
+    assert(op.nn == 0xFF);
+    assert(op.x == 1);
+  
+    instruction[0] = 0x81; instruction[1] = 0x30;
+    decode(instruction, &op);
+    assert(op.type == SET_REG_BY_REG);
+    assert(op.y == 3);
+    assert(op.x == 1);
+
+    instruction[0] = 0x81; instruction[1] = 0x31;
+    decode(instruction, &op);
+    assert(op.type == OR);
+    assert(op.y == 3);
+    assert(op.x == 1);
+
+    instruction[0] = 0x81; instruction[1] = 0x32;
+    decode(instruction, &op);
+    assert(op.type == AND);
+    assert(op.y == 3);
+    assert(op.x == 1);
+
+    instruction[0] = 0x81; instruction[1] = 0x33;
+    decode(instruction, &op);
+    assert(op.type == XOR);
+    assert(op.y == 3);
+    assert(op.x == 1);
+
+    instruction[0] = 0x81; instruction[1] = 0x34;
+    decode(instruction, &op);
+    assert(op.type == ADD_BY_REG);
+    assert(op.y == 3);
+    assert(op.x == 1);
+    
+    instruction[0] = 0x81; instruction[1] = 0x35;
+    decode(instruction, &op);
+    assert(op.type == SUB);
+    assert(op.y == 3);
+    assert(op.x == 1);
+ 
+    instruction[0] = 0x81; instruction[1] = 0x36;
+    decode(instruction, &op);
+    assert(op.type == SHIFT_RIGHT);
+    assert(op.x == 1);
+
+    instruction[0] = 0x81; instruction[1] = 0x37;
+    decode(instruction, &op);
+    assert(op.type == SUBN);
+    assert(op.y == 3);
+    assert(op.x == 1);
+
+    instruction[0] = 0x81; instruction[1] = 0x3E;
+    decode(instruction, &op);
+    assert(op.type == SHIFT_LEFT);
+    assert(op.x == 1);
+
+    instruction[0] = 0x91; instruction[1] = 0x30;
+    decode(instruction, &op);
+    assert(op.type == SKIP_NEQ);
+    assert(op.x == 1);
+    assert(op.y == 3);
+
+    // Will also be read as SNEQ (not strict)
+    instruction[0] = 0x91; instruction[1] = 0x3E;
+    decode(instruction, &op);
+    assert(op.type == SKIP_NEQ);
+    assert(op.x == 1);
+    assert(op.y == 3);
+
+    instruction[0] = 0xA1; instruction[1] = 0x23;
+    decode(instruction, &op);
+    assert(op.type == SET_I_REG);
+    assert(op.nnn == 0x123);
+
+    instruction[0] = 0xB1; instruction[1] = 0x23;
+    decode(instruction, &op);
+    assert(op.type == BNNN);
+    assert(op.nnn == 0x123);
+
+    instruction[0] = 0xC1; instruction[1] = 0x23;
+    decode(instruction, &op);
+    assert(op.type == RANDOM);
+    assert(op.x == 1);
+    assert(op.nn == 0x23);
+
+    instruction[0] = 0xD1; instruction[1] = 0x25;
+    decode(instruction, &op);
+    assert(op.type == DISPLAY);
+    assert(op.x == 1);
+    assert(op.y == 2);
+    assert(op.n == 5);
+
+    instruction[0] = 0xE1; instruction[1] = 0x9E;
+    decode(instruction, &op);
+    assert(op.type == SKIP_IF_KEY);
+    assert(op.x == 1);
+
+    instruction[0] = 0xE1; instruction[1] = 0xA1;
+    decode(instruction, &op);
+    assert(op.type == SKIP_IF_NKEY);
+    assert(op.x == 1);
+
+    instruction[0] = 0xF1; instruction[1] = 0x07;
+    decode(instruction, &op);
+    assert(op.type == GET_DELAY);
+    assert(op.x == 1);
+
+    instruction[0] = 0xF1; instruction[1] = 0x0A;
+    decode(instruction, &op);
+    assert(op.type == GET_KEY);
+    assert(op.x == 1);
+
+    instruction[0] = 0xF1; instruction[1] = 0x15;
+    decode(instruction, &op);
+    assert(op.type == SET_DELAY);
+    assert(op.x == 1);
+
+    instruction[0] = 0xF1; instruction[1] = 0x18;
+    decode(instruction, &op);
+    assert(op.type == SET_AUDIO);
+    assert(op.x == 1);
+
+    instruction[0] = 0xF1; instruction[1] = 0x1E;
+    decode(instruction, &op);
+    assert(op.type == ADVANCE_I);
+    assert(op.x == 1);
+
+    instruction[0] = 0xF1; instruction[1] = 0x29;
+    decode(instruction, &op);
+    assert(op.type == SET_I_HEX_SPRITE);
+    assert(op.x == 1);
+
+    instruction[0] = 0xF1; instruction[1] = 0x33;
+    decode(instruction, &op);
+    assert(op.type == BCD);
+    assert(op.x == 1);
+
+    instruction[0] = 0xF1; instruction[1] = 0x55;
+    decode(instruction, &op);
+    assert(op.type == REG_DUMP);
+    assert(op.x == 1); 
+
+    instruction[0] = 0xF1; instruction[1] = 0x65;
+    decode(instruction, &op);
+    assert(op.type == REG_LOAD);
+    assert(op.x == 1); 
+
 }

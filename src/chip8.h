@@ -67,7 +67,7 @@ enum op_type
 };
 
 extern enum op_type op_type_lookup[0xE];
-extern enum op_type bit_op_type_lookup[9];
+extern enum op_type bit_op_type_lookup[0xF];
 extern char *op_name_by_type[];
 extern u_int8_t digit_sprites_data[0x50];
 
