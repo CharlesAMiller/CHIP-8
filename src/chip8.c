@@ -162,6 +162,8 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
     u_int8_t *x = &(state->V[decoded_op->x]);
     u_int8_t *y = &(state->V[decoded_op->y]);
 
+    u_int8_t temp; 
+
     switch (decoded_op->type)
     {
     case CLEAR_DISPLAY:
@@ -169,8 +171,8 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
         peripherals->display(state->screen);
         break;
     case RET:
-        state->PC = state->stack[state->SP];
         state->SP -= (state->SP > 0) ? 1 : 0; // Min SP is 0
+        state->PC = state->stack[state->SP];
         break;
     case JUMP:
         state->PC = decoded_op->nnn;
@@ -215,24 +217,29 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
         *x ^= *y;
         break;
     case ADD_BY_REG:
-        state->V[0xF] = ((u_int8_t)(*x + *y) < *x || ((u_int8_t)(*x + *y)) < *y); // Carry
+        temp = ((u_int8_t)(*x + *y) < *x || ((u_int8_t)(*x + *y)) < *y); // Carry
         *x += *y;
+        state->V[0xF] = temp;
         break;
     case SUB:
-        state->V[0xF] = (*x > *y); // NOT borrow
+        temp = (*x > *y); // NOT borrow
         *x -= *y;
+        state->V[0xF] = temp;
         break;
     case SHIFT_RIGHT:
-        state->V[0xF] = *x & 0x01; // LSB was set
+        temp = *x & 0x01; // LSB was set
         *x >>= 1;
+        state->V[0xF] = temp;
         break;
     case SUBN:
-        state->V[0xF] = (*y > *x);
+        temp = (*y > *x);
         *x = *y - *x;
+        state->V[0xF] = temp;
         break;
     case SHIFT_LEFT:
-        state->V[0xF] = (*x & 0b10000000) >> 7; // MSB was set
+        temp = (*x & 0b10000000) >> 7; // MSB was set
         *x <<= 1;
+        state->V[0xF] = temp;
         break;
     case SKIP_NEQ:
         state->PC += (*x != *y) ? 2 : 0;
@@ -306,8 +313,10 @@ void display(state *state, op *decoded_op)
             break;
 
         screen_buffer = state->screen[i] ^ (state->memory[state->I + n] >> x_off);
-        if ((state->screen[i] & ~screen_buffer) != 0)
-            unset_pixel = 1;
+        for (int j = 8; j > 0; j--)
+            if ( (state->screen[i] & (1 << j)) != 0 && (screen_buffer & (1 << j)) == 0)
+                unset_pixel = 1;
+
         state->screen[i] = screen_buffer;
 
         // Depending on the x coord, the sprite can span two bytes.
@@ -316,8 +325,10 @@ void display(state *state, op *decoded_op)
         if (x_off > 0 && (i + 1) % H_OFFSET != 0)
         {
             screen_buffer = state->screen[i + 1] ^ (state->memory[state->I + n] << (8 - x_off));
-            if ((state->screen[i + 1] & ~screen_buffer) != 0)
-                unset_pixel = 1;
+            for (int j = 8; j > 0; j--)
+                if ( (state->screen[i + 1] & (1 << j)) != 0 && (screen_buffer & (1 << j)) == 0)
+                    unset_pixel = 1;
+
             state->screen[i + 1] = screen_buffer;
         }
     }

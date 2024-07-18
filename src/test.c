@@ -196,6 +196,25 @@ void test_math(state *state)
     assert(state->V[2] == 1);
     assert(state->V[0xF] == 0);
 
+    // Shift left
+    state->V[1] = 0xFF;
+    decoded_op.type = SHIFT_LEFT;
+    execute(&decoded_op, state, NULL);
+    assert(state->V[1] == 0xFE);
+    assert(state->V[0xF] == 1);
+    // This time where the MSB will be 0
+    state->V[1] = 0;
+    execute(&decoded_op, state, NULL);
+    assert(state->V[0xF] == 0);
+
+    // Shift right
+    state->V[1] = 1;
+    decoded_op.type = SHIFT_RIGHT;
+    execute(&decoded_op, state, NULL);
+    assert(state->V[1] == 0);
+    assert(state->V[0xF] == 1);
+    execute(&decoded_op, state, NULL);
+    assert(state->V[0xF] == 0);
 }
 
 void test_bcd(state *state)
