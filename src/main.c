@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     chip8 cpu = chip8_init(&config);
 
     // Start graphics loop
-    init_screen(SCREEN_W * 16, SCREEN_H * 16, 8.0f);
+    init_screen(SCREEN_W * 8, SCREEN_H * 8, 8.0f);
     start_render_loop(&cpu);
 }
 

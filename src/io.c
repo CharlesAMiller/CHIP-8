@@ -54,6 +54,6 @@ u_int8_t get_key_pressed()
 
 u_int8_t is_key_pressed(u_int8_t key)
 {
-    sfBool isPresed = sfKeyboard_isKeyPressed(keyMap[key]);
-    return (isPresed == sfTrue) ? 1 : 0;
+    sfBool isPressed = sfKeyboard_isKeyPressed(keyMap[key]);
+    return (isPressed == sfTrue) ? 1 : 0;
 }
