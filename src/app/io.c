@@ -5,22 +5,22 @@
 #include "io.h"
 
 sfKeyCode keyMap[16] = {
-    [0] = sfKeyNum0,
+    [0] = sfKeyX,
     [1] = sfKeyNum1,
     [2] = sfKeyNum2,
     [3] = sfKeyNum3,
-    [4] = sfKeyNum4,
-    [5] = sfKeyNum5,
-    [6] = sfKeyNum6,
-    [7] = sfKeyNum7,
-    [8] = sfKeyNum8,
-    [9] = sfKeyNum9,
-    [0xA] = sfKeyA,
-    [0xB] = sfKeyB,
-    [0xC] = sfKeyC,
-    [0xD] = sfKeyD,
-    [0xE] = sfKeyE,
-    [0xF] = sfKeyF};
+    [4] = sfKeyQ,
+    [5] = sfKeyW,
+    [6] = sfKeyE,
+    [7] = sfKeyA,
+    [8] = sfKeyS,
+    [9] = sfKeyD,
+    [0xA] = sfKeyZ,
+    [0xB] = sfKeyC,
+    [0xC] = sfKeyNum4,
+    [0xD] = sfKeyR,
+    [0xE] = sfKeyF,
+    [0xF] = sfKeyV};
 
 void load_program(char *file_name, u_int8_t *program)
 {

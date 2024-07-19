@@ -3,7 +3,6 @@
  * @brief Implementation of graphics features
  */
 #include "graphics.h"
-#include "chip8.h"
 
 sfImage *image = NULL; 
 sfTexture *texture = NULL;
@@ -63,8 +62,11 @@ void draw_screen(u_int8_t *screen)
     sfRenderWindow_display(window);
 }
 
-void start_render_loop(chip8 *cpu)
+void start_render_loop(chip8 *cpu, unsigned int frame_limit)
 {
+    // Kind of hacky solution to the CHIP-8 timing
+    sfWindow_setFramerateLimit(window, frame_limit);
+
     sfEvent event;
     while (sfRenderWindow_isOpen(window))
     {
@@ -76,7 +78,5 @@ void start_render_loop(chip8 *cpu)
                 sfRenderWindow_close(window);
         }
 
-        sfTime sleepTime = { 500 };
-        sfSleep(sleepTime);
     }
 }

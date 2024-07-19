@@ -2,12 +2,12 @@ CC = clang
 CFLAGS = -I/opt/homebrew/Cellar/csfml/2.6.1/include
 LDFLAGS = -L/opt/homebrew/lib -lcsfml-graphics -lcsfml-window -lcsfml-system -lcsfml-audio
 
-SRCS = main.c chip8.c audio.c io.c graphics.c
-OBJS = $(SRCS:.c=.o)
+APP_SRCS = src/app/main.c src/chip8/chip8.c src/app/audio.c src/app/io.c src/app/graphics.c
+OBJS = $(APP_SRCS:.c=.o)
 TARGET = chip8 
 
 # Variables for the test task
-TEST_SRCS = test.c chip8.c
+TEST_SRCS = src/test/test.c src/chip8/chip8.c
 TEST_OBJS = $(TEST_SRCS:.c=.o)
 TEST_TARGET = test_chip8
 

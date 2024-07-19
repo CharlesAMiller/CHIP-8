@@ -1,4 +1,4 @@
-#include "chip8.h"
+#include "../chip8/chip8.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>

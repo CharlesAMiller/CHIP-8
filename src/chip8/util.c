@@ -1,5 +1,4 @@
 #include "util.h"
-#include "chip8.h"
 
 void print_screen(u_int8_t *screen)
 {
@@ -23,4 +22,15 @@ void print_screen(u_int8_t *screen)
         for (int i = 8; i > 0; i--, pixels <<= 1)
             printf("%c", ((pixels & pixel_mask) != 0) ? SET_PIXEL : UNSET_PIXEL);
     }
+}
+
+void print_state(state *state) 
+{
+    printf("PC: %x I: %x ", state->PC, state->I);
+    for (int i = 0; i < REGISTER_COUNT; i++) 
+        printf(" V[%d]: %x", i, state->V[i]);
+    printf(" SP: %x", state->SP);
+    for (int i = 0; i < STACK_COUNT; i++)
+        printf(" S[%d]: %x", state->stack[i]);
+    printf("\n");
 }

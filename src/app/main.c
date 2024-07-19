@@ -7,7 +7,7 @@
  */
 
 #include "graphics.h"
-#include "chip8.h"
+#include "../chip8/chip8.h"
 #include "audio.h"
 #include "audio.h"
 #include "io.h"
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 
     // Start graphics loop
     init_screen(SCREEN_W * 8, SCREEN_H * 8, 8.0f);
-    start_render_loop(&cpu);
+    start_render_loop(&cpu, 60);
 }
 
 void init_peripherals(peripherals *peripherals)

@@ -9,7 +9,7 @@
 #include <SFML/Graphics.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "chip8.h"
+#include "../chip8/chip8.h"
 
 /**
  * @brief Image that is displayed to the screen
@@ -49,7 +49,8 @@ void draw_screen(u_int8_t *screen);
  * of the device's screen to the application window
  *
  * @param cpu - The CHIP-8 device to emulate and render for
+ * @param frame_limit - Sets the rate at which the window is polled
  */
-void start_render_loop(chip8 *cpu);
+void start_render_loop(chip8 *cpu, unsigned int frame_limit);
 
 #endif

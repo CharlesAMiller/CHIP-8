@@ -28,7 +28,7 @@ void noise()
     float frequency = 440.0f;    // A4 note frequency
     float amplitude = 0.5f;      // Amplitude (0.0 to 1.0)
     unsigned sampleRate = 44100; // Standard sample rate
-    float duration = .1f;       // Duration in seconds
+    float duration = .05f;       // Duration in seconds
 
     sfSoundBuffer *buffer = createSineWaveBuffer(frequency, amplitude, sampleRate, duration);
     if (!buffer)
