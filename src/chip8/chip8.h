@@ -330,7 +330,7 @@ typedef struct op
      * @brief A 12 bit constant for the instruction, typically used for jump/set related instructions
      * e.g. 0x0NNN;
      */
-    u_int16_t nnn;
+    uint16_t nnn;
     /**
      * @brief An 8 bit constant for the instruction
      */
@@ -364,7 +364,7 @@ typedef struct state
      * @brief The Program Counter register.
      * It points to the location in memory that holds the current instruction to be fetched
      */
-    u_int16_t PC;
+    uint16_t PC;
     /**
      * @brief The Stack Pointer register. It points to an index in our stack.
      * It is incremented and decremented as RET and CALL operations are called
@@ -373,7 +373,7 @@ typedef struct state
     /**
      * @brief The Index register. It points to a location in memory, and is used for various operations
      */
-    u_int16_t I;
+    uint16_t I;
     /**
      * @brief The delay_timer. If positive, it is decremented by one each cycle of the cpu
      */
@@ -387,7 +387,7 @@ typedef struct state
      * @brief The Stack. It used to persist the PC as subroutines are branched to during CALL operations.
      * It is managed by the SP
      */
-    u_int16_t stack[STACK_COUNT];
+    uint16_t stack[STACK_COUNT];
     /**
      * @brief The General registers. There are 16 by default, and they are used to quickly store information
      * and perform as part of instructions
