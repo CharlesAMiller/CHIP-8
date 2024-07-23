@@ -32,11 +32,11 @@ int init_screen(int width, int height, float scale_factor)
     return 0;
 }
 
-void draw_screen(u_int8_t *screen)
+void draw_screen(uint8_t *screen)
 {
-    u_int8_t x = 0;
-    u_int8_t y = 0;
-    u_int8_t pixels;
+    uint8_t x = 0;
+    uint8_t y = 0;
+    uint8_t pixels;
     sfColor color;
 
     for (int i = 0; i < SCREEN_BYTES; i++)

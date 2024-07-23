@@ -222,7 +222,7 @@ enum op_type
      *  and draws the sprite to the V[X] and V[Y] position in the screen buffer
      * peripheral: display
      */
-    DISPLAY,
+    DRAW_SPRITE,
     /**
      * @brief Skips the next instruction if the key stored in V[X] is being pressed
      * modifies: PC
@@ -301,7 +301,7 @@ extern enum op_type bit_op_type_lookup[0xF];
  * A buffer that contains the ASCII representations of each hex digit
  * Each digit is 5 lines (and bytes) long
  */
-extern u_int8_t digit_sprites_data[0x50];
+extern uint8_t digit_sprites_data[0x50];
 
 /**
  * @struct op
@@ -320,12 +320,12 @@ typedef struct op
      * @brief The X value of the instruction, typically refers to one of the general registers
      * e.g. 0x0X00;
      */
-    u_int8_t x;
+    uint8_t x;
     /**
      * @brief The Y value of the instruction, typically refers to one of the general registers
      * e.g. 0x00Y0;
      */
-    u_int8_t y;
+    uint8_t y;
     /**
      * @brief A 12 bit constant for the instruction, typically used for jump/set related instructions
      * e.g. 0x0NNN;
@@ -334,11 +334,11 @@ typedef struct op
     /**
      * @brief An 8 bit constant for the instruction
      */
-    u_int8_t nn;
+    uint8_t nn;
     /**
      * @brief A 4 bit constant, typically used for small offsets when X and Y are already defined
      */
-    u_int8_t n;
+    uint8_t n;
 } op;
 
 ///
@@ -355,11 +355,11 @@ typedef struct state
      * @brief The pointer to the memory buffer. Should be set to the size specified by RAM_SIZE
      * @see RAM_SIZE
      */
-    u_int8_t *memory;
+    uint8_t *memory;
     /**
      * @brief A buffer for the contents of the machine's screen. Its size is determined by SCREEN_H x SCREEN_W
      */
-    u_int8_t screen[SCREEN_BYTES];
+    uint8_t screen[SCREEN_BYTES];
     /**
      * @brief The Program Counter register.
      * It points to the location in memory that holds the current instruction to be fetched
@@ -369,7 +369,7 @@ typedef struct state
      * @brief The Stack Pointer register. It points to an index in our stack.
      * It is incremented and decremented as RET and CALL operations are called
      */
-    u_int8_t SP;
+    uint8_t SP;
     /**
      * @brief The Index register. It points to a location in memory, and is used for various operations
      */
@@ -377,12 +377,12 @@ typedef struct state
     /**
      * @brief The delay_timer. If positive, it is decremented by one each cycle of the cpu
      */
-    u_int8_t delay_timer;
+    uint8_t delay_timer;
     /**
      * @brief The audio_timer. If positive, it is decremented by one each cycle of the cpu.
      * Each cycle its value is positive, the audio peripheral is called to produce noise
      */
-    u_int8_t audio_timer;
+    uint8_t audio_timer;
     /**
      * @brief The Stack. It used to persist the PC as subroutines are branched to during CALL operations.
      * It is managed by the SP
@@ -392,7 +392,7 @@ typedef struct state
      * @brief The General registers. There are 16 by default, and they are used to quickly store information
      * and perform as part of instructions
      */
-    u_int8_t V[REGISTER_COUNT];
+    uint8_t V[REGISTER_COUNT];
 } state;
 
 /**
@@ -406,7 +406,7 @@ typedef struct peripherals
      * @brief The display peripheral that is called. It is provided the screen buffer as a parameter
      * It should draw the contents of the screen to some sort of display
      */
-    void (*display)(u_int8_t *);
+    void (*display)(uint8_t *);
     /**
      * @brief The audio/noiser peripheral that is periodically called
      * It should create some noise via some sounder
@@ -415,17 +415,17 @@ typedef struct peripherals
     /**
      * @brief The random number generator peripheral. It should produce a random byte of data.
      */
-    u_int8_t (*random)();
+    uint8_t (*random)();
     /**
      * @brief The keyboard peripheral. It should determine if the key with the given code
      * was pressed. It should return a value of 1 if pressed, and 0 if it wasn't.
      */
-    u_int8_t (*is_key_pressed)(u_int8_t);
+    uint8_t (*is_key_pressed)(uint8_t);
     /**
      * @brief The keyboard peripheral. It should produce a blocking call that awaits the
      * press of a key. The keycode should be returned by this function.
      */
-    u_int8_t (*get_key_pressed)();
+    uint8_t (*get_key_pressed)();
 } peripherals;
 
 /**
@@ -457,11 +457,11 @@ typedef struct chip8_config
     /**
      * @brief The pointer to the memory that has been allocated for the CHIP-8's
      */
-    u_int8_t *memory;
+    uint8_t *memory;
     /**
      * @brief The program instructions that have been read and will be loaded into the CHIP-8's memory
      */
-    u_int8_t *program;
+    uint8_t *program;
 } chip8_config;
 
 /**
@@ -470,7 +470,7 @@ typedef struct chip8_config
  * It zeroes memory, registers, and sets up the memory appropriately. It maps the program
  * into the appropriate place in the device's memory
  */
-void init_state(state *state, u_int8_t *memory, u_int8_t *program);
+void init_state(state *state, uint8_t *memory, uint8_t *program);
 
 /**
  * @brief This function reads the next instruction from memory, based off of the given state's PC.
@@ -478,7 +478,7 @@ void init_state(state *state, u_int8_t *memory, u_int8_t *program);
  * @param state - The state of our emulator, which we'll use to read memory and PC
  * @param instruction - Ultimately the instruction we'll have read from memory
  */
-void fetch(state *state, u_int8_t instruction[2]);
+void fetch(state *state, uint8_t instruction[2]);
 
 /**
  * @brief This function decodes the details of an instruction to extract its op code and operands.
@@ -486,7 +486,7 @@ void fetch(state *state, u_int8_t instruction[2]);
  * @param instruction - The two bytes that constitute the instruction being read (typically from PC)
  * @param decoded_op - A pointer to the well-defined format for an operation and its possible operands
  */
-void decode(u_int8_t instruction[2], op *decoded_op);
+void decode(uint8_t instruction[2], op *decoded_op);
 
 /**
  * @brief Given a well formed decoded operation, this function will execute the operation against the

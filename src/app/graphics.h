@@ -42,7 +42,7 @@ int init_screen(int width, int height, float scale_factor);
  *
  * @param screen - The CHIP-8 screen buffer
  */
-void draw_screen(u_int8_t *screen);
+void draw_screen(uint8_t *screen);
 
 /**
  * @brief Starts a loop that runs the given cpu, periodically rendering the contents

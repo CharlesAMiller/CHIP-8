@@ -7,7 +7,7 @@
 #define UNSET_PIXEL '-'
 #define SET_PIXEL '#'
 
-void print_screen(u_int8_t *screen);
+void print_screen(uint8_t *screen);
 void print_state(state *state);
 
 #endif

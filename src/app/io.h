@@ -22,7 +22,7 @@ extern sfKeyCode keyMap[16];
  *
  * @return The key code presed
  */
-u_int8_t get_key_pressed();
+uint8_t get_key_pressed();
 
 /**
  * @brief A function that checks if the given key code was pressed
@@ -30,7 +30,7 @@ u_int8_t get_key_pressed();
  * @param key - The key to be checked
  * @returns 1 - if the key was pressed. 0 otherwise.
  */
-u_int8_t is_key_pressed(u_int8_t key);
+uint8_t is_key_pressed(uint8_t key);
 
 /**
  * @brief A function that returns a random value between 0 - 255 (inclusive)
@@ -38,7 +38,7 @@ u_int8_t is_key_pressed(u_int8_t key);
  *
  * @returns a random number between 0 - 255 (inclusive)
  */
-u_int8_t rand_byte();
+uint8_t rand_byte();
 
 /**
  * @brief Loads the give file ands writes its contents to the given program memory
@@ -46,6 +46,6 @@ u_int8_t rand_byte();
  * @param file_name - The path of the program file to be read from
  * @param program - The pointer to the memory location for the program to be loaded to
  */
-void load_program(char *file_name, u_int8_t *program);
+void load_program(char *file_name, uint8_t *program);
 
 #endif

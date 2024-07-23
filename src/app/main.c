@@ -21,8 +21,8 @@ int main(int argc, char *argv[])
     // Setup
     peripherals peripherals;
     init_peripherals(&peripherals);
-    u_int8_t memory[RAM_SIZE];
-    u_int8_t program_memory[PROGRAM_SIZE];
+    uint8_t memory[RAM_SIZE];
+    uint8_t program_memory[PROGRAM_SIZE];
     load_program(argv[1], program_memory);
     chip8_config config = {&peripherals, memory, program_memory};
 

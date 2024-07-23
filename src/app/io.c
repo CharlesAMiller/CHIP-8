@@ -22,7 +22,7 @@ sfKeyCode keyMap[16] = {
     [0xE] = sfKeyF,
     [0xF] = sfKeyV};
 
-void load_program(char *file_name, u_int8_t *program)
+void load_program(char *file_name, uint8_t *program)
 {
     long lSize;
     FILE *file = fopen(file_name, "rb");
@@ -35,13 +35,13 @@ void load_program(char *file_name, u_int8_t *program)
     fread(program, 1, lSize, file);
 }
 
-u_int8_t rand_byte()
+uint8_t rand_byte()
 {
-    u_int8_t r = rand() % 256;
+    uint8_t r = rand() % 256;
     return r;
 }
 
-u_int8_t get_key_pressed()
+uint8_t get_key_pressed()
 {
     // Block
     while (1)
@@ -52,7 +52,7 @@ u_int8_t get_key_pressed()
     }
 }
 
-u_int8_t is_key_pressed(u_int8_t key)
+uint8_t is_key_pressed(uint8_t key)
 {
     sfBool isPressed = sfKeyboard_isKeyPressed(keyMap[key]);
     return (isPressed == sfTrue) ? 1 : 0;

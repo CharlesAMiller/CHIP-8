@@ -16,7 +16,7 @@ enum op_type op_type_lookup[0xE] = {
     [0xA] = SET_I_REG,
     [0xB] = BNNN,
     [0xC] = RANDOM,
-    [0xD] = DISPLAY};
+    [0xD] = DRAW_SPRITE};
 
 enum op_type bit_op_type_lookup[0xF] = {
     [0] = SET_REG_BY_REG,
@@ -29,7 +29,7 @@ enum op_type bit_op_type_lookup[0xF] = {
     [7] = SUBN,
     [0xE] = SHIFT_LEFT};
 
-u_int8_t digit_sprites_data[0x50] = {
+uint8_t digit_sprites_data[0x50] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
     0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -51,7 +51,7 @@ u_int8_t digit_sprites_data[0x50] = {
 void chip8_run(chip8 *cpu)
 {
     static op decoded_instruction;
-    static u_int8_t instruction[2] = {0, 0};
+    static uint8_t instruction[2] = {0, 0};
     state *state = &((*cpu).state);
 
     fetch(state, instruction);
@@ -68,15 +68,15 @@ void chip8_run(chip8 *cpu)
         state->delay_timer--;
 }
 
-void fetch(state *state, u_int8_t instruction[2])
+void fetch(state *state, uint8_t instruction[2])
 {
     for (int i = 0; i < 2; i++)
         instruction[i] = state->memory[state->PC++];
 }
 
-void decode(u_int8_t instruction[2], op *decoded_op)
+void decode(uint8_t instruction[2], op *decoded_op)
 {
-    u_int8_t op_type_major = (instruction[0] >> 4) & 0x0F;               // 0xN000;
+    uint8_t op_type_major = (instruction[0] >> 4) & 0x0F;               // 0xN000;
     decoded_op->nnn = (((instruction[0]) & 0x0F) << 8) | instruction[1]; // 0x0NNN;
     decoded_op->nn = instruction[1];                                     // 0x00NN;
     decoded_op->x = (instruction[0] & 0x0F);                             // 0x0X00;
@@ -159,10 +159,10 @@ void decode(u_int8_t instruction[2], op *decoded_op)
 
 void execute(op *decoded_op, state *state, peripherals *peripherals)
 {
-    u_int8_t *x = &(state->V[decoded_op->x]);
-    u_int8_t *y = &(state->V[decoded_op->y]);
+    uint8_t *x = &(state->V[decoded_op->x]);
+    uint8_t *y = &(state->V[decoded_op->y]);
 
-    u_int8_t temp; 
+    uint8_t temp; 
 
     switch (decoded_op->type)
     {
@@ -191,7 +191,7 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
     case SET_I_REG:
         state->I = decoded_op->nnn;
         break;
-    case DISPLAY:
+    case DRAW_SPRITE:
         display(state, decoded_op);
         peripherals->display(state->screen);
         break;
@@ -217,7 +217,7 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
         *x ^= *y;
         break;
     case ADD_BY_REG:
-        temp = ((u_int8_t)(*x + *y) < *x || ((u_int8_t)(*x + *y)) < *y); // Carry
+        temp = ((uint8_t)(*x + *y) < *x || ((uint8_t)(*x + *y)) < *y); // Carry
         *x += *y;
         state->V[0xF] = temp;
         break;
@@ -295,17 +295,17 @@ void display(state *state, op *decoded_op)
 {
     // Because the screen with is 64, there are 8 bytes to each row,
     // this tells us which byte our given x pixel is in
-    u_int8_t x = ((state->V[decoded_op->x]) % SCREEN_W) / 8;
+    uint8_t x = ((state->V[decoded_op->x]) % SCREEN_W) / 8;
     // This tells us how many bits into our byte we should start drawing the sprite
-    u_int8_t x_off = ((state->V[decoded_op->x]) % SCREEN_W) % 8;
-    u_int8_t y = (state->V[decoded_op->y]) % SCREEN_H;
+    uint8_t x_off = ((state->V[decoded_op->x]) % SCREEN_W) % 8;
+    uint8_t y = (state->V[decoded_op->y]) % SCREEN_H;
 
     // Used to determine if the operation resulted in ANY pixels were unset/toggled off
     int unset_pixel = 0;
     int start_idx = ((y * H_OFFSET) + x);
     int end_idx = start_idx + (decoded_op->n * H_OFFSET);
 
-    u_int8_t screen_buffer;
+    uint8_t screen_buffer;
 
     for (int i = start_idx, n = 0; i < end_idx; i += H_OFFSET, n++)
     {
@@ -341,9 +341,9 @@ chip8 chip8_init(chip8_config *config)
     cpu.peripherals = config->peripherals;
     init_state(&cpu.state, config->memory, config->program);
     return cpu;
-}
+} 
 
-void init_state(state *state, u_int8_t *memory, u_int8_t *program)
+void init_state(state *state, uint8_t *memory, uint8_t *program)
 {
     // Point our memory to wherever has been allocated for us
     state->memory = memory;

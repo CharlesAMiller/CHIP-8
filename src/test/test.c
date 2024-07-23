@@ -12,14 +12,14 @@ void test_load_reg(state *state);
 void test_math(state *state);
 void test_bcd(state *state);
 
-void clear_display_stub(u_int8_t *screen);
+void clear_display_stub(uint8_t *screen);
 
 int main(int argc, char *argv[])
 {
     test_decode();
 
-    u_int8_t memory[RAM_SIZE];
-    u_int8_t program_memory[PROGRAM_SIZE];
+    uint8_t memory[RAM_SIZE];
+    uint8_t program_memory[PROGRAM_SIZE];
     state test_state;
     init_state(&test_state, memory, program_memory);
 
@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
     test_bcd(&test_state);
 }
 
-void clear_display_stub(u_int8_t *screen)
+void clear_display_stub(uint8_t *screen)
 {
     printf("Printed screen");
 }
@@ -243,7 +243,7 @@ void test_bcd(state *state)
 void test_decode()
 {
     op op;
-    u_int8_t instruction[2] = { 0x00, 0xE0 };
+    uint8_t instruction[2] = { 0x00, 0xE0 };
     decode(instruction, &op);
     assert(op.type == CLEAR_DISPLAY);
 
@@ -374,7 +374,7 @@ void test_decode()
 
     instruction[0] = 0xD1; instruction[1] = 0x25;
     decode(instruction, &op);
-    assert(op.type == DISPLAY);
+    assert(op.type == DRAW_SPRITE);
     assert(op.x == 1);
     assert(op.y == 2);
     assert(op.n == 5);
