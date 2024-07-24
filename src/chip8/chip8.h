@@ -24,6 +24,11 @@
 #include <string.h>
 #include <stdio.h>
 
+// Check if SP is defined, and if so, undefine it
+#ifdef SP
+#undef SP
+#endif
+
 ///
 /// Constants
 ///
@@ -522,5 +527,11 @@ chip8 chip8_init(chip8_config *config);
  * It sets the states screen buffer appropriately
  */
 void display(state *state, op *decoded_op);
+
+// If SP was previously defined, redefine it here
+#ifdef SP_BACKUP
+#define SP SP_BACKUP
+#undef SP_BACKUP
+#endif
 
 #endif
