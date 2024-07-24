@@ -288,6 +288,10 @@ enum op_type
      * modifies: V[0] ... V[X]
      */
     REG_LOAD,
+    /**
+     * @brief Not an actual instruction. Just used as a placeholder.
+     */
+    NOOP,
 };
 
 /**

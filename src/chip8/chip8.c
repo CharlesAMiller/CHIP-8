@@ -5,6 +5,7 @@
 #include "chip8.h"
 
 enum op_type op_type_lookup[0xE] = {
+    [0] = NOOP,
     [1] = JUMP,
     [2] = CALL,
     [3] = IF_EQ,
@@ -12,6 +13,7 @@ enum op_type op_type_lookup[0xE] = {
     [5] = IF_EQ_REG,
     [6] = SET_REG,
     [7] = ADD_REG,
+    [8] = NOOP,
     [9] = SKIP_NEQ,
     [0xA] = SET_I_REG,
     [0xB] = BNNN,
@@ -27,6 +29,7 @@ enum op_type bit_op_type_lookup[0xF] = {
     [5] = SUB,
     [6] = SHIFT_RIGHT,
     [7] = SUBN,
+    NOOP, NOOP, NOOP, NOOP, NOOP, NOOP,
     [0xE] = SHIFT_LEFT};
 
 uint8_t digit_sprites_data[0x50] = {
