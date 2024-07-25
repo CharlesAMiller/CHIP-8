@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "author": "CharlesAMiller",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-arduino-mega", "id": "mega", "top": 200, "left": 20, "attrs": {} },
+    {
+      "type": "wokwi-membrane-keypad",
+      "id": "keypad",
+      "top": 17.2,
+      "left": 543.2,
+      "attrs": {
+        "keys": [ "1", "2", "3", "+", "4", "5", "6", "-", "7", "8", "9", "*", ".", "0", "=", "/" ]
+      }
+    },
+    { "type": "wokwi-ili9341", "id": "lcd1", "top": -263.4, "left": 59.3, "attrs": {} }
+  ],
+  "connections": [
+    [ "mega:A3", "keypad:C1", "brown", [ "v76", "*", "h0", "v0" ] ],
+    [ "mega:A2", "keypad:C2", "gray", [ "v80", "*", "h0", "v0" ] ],
+    [ "mega:A1", "keypad:C3", "orange", [ "v84", "*", "h0", "v0" ] ],
+    [ "mega:A0", "keypad:C4", "pink", [ "v88", "*", "h0", "v0" ] ],
+    [ "mega:5", "keypad:R1", "blue", [ "v-34", "h96", "*", "v12" ] ],
+    [ "mega:4", "keypad:R2", "green", [ "v-30", "h80", "*", "v16" ] ],
+    [ "mega:3", "keypad:R3", "purple", [ "v-26", "h64", "*", "v20" ] ],
+    [ "mega:2", "keypad:R4", "gold", [ "v-22", "h48", "*", "v24" ] ],
+    [ "mega:5V", "lcd1:VCC", "red", [ "v69.3", "h-218.4", "v-393.6" ] ],
+    [ "mega:GND.2", "lcd1:GND", "black", [ "v40.5", "h-208.7", "v-403.2", "h134.4" ] ],
+    [ "lcd1:MISO", "mega:50", "green", [ "v0" ] ],
+    [ "lcd1:SCK", "mega:52", "green", [ "v0" ] ],
+    [ "lcd1:MOSI", "mega:51", "green", [ "v0" ] ],
+    [ "lcd1:D/C", "mega:28", "green", [ "v0" ] ],
+    [ "lcd1:CS", "mega:30", "green", [ "v0" ] ]
+  ],
+  "serialMonitor": { "display": "always", "newline": "lf", "convertEol": false },
+  "dependencies": {}
+}
