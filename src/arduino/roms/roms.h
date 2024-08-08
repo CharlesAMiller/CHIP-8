@@ -3,6 +3,8 @@
 #include "down8.h"
 #include "tetris.h"
 
+#define ROMS_COUNT 3
+
 const char* rom_names[] = {
     "br8kout",
     "down8",

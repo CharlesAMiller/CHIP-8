@@ -40,12 +40,14 @@ $(OUTPUT_DIR)/%.h: $(ROMS_DIR)/%
 
 # Rule to generate index header file
 $(INDEX_FILE): $(ROM_HEADER_FILES)
-	@echo "// ROM Index Header File" > $(INDEX_FILE)
+	@echo "// ROM Index Header File" >> $(INDEX_FILE)
 	@for file in $(ROM_HEADER_FILES); do \
 		name=$$(basename $$file .h); \
 		name=$$(echo $$name | sed 's/\./_/g'); \
 		echo "#include \"$$name.h\"" >> $(INDEX_FILE); \
 	done
+	@echo >> $(INDEX_FILE)
+	@echo "#define ROMS_COUNT $(words $(strip $(ROM_HEADER_FILES)))" >> $(INDEX_FILE)
 	@echo >> $(INDEX_FILE)
 	@echo "const char* rom_names[] = {" >> $(INDEX_FILE)
 	@for file in $(ROM_HEADER_FILES); do \
