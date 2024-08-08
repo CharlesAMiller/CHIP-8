@@ -58,6 +58,14 @@ Note: You must have an active subscription to [Wokwi Club](https://wokwi.com/clu
 3. From the editor, open `diagram.json` and you should be able to view the simulated electronics
 4. Press the green start button to begin the simulation (this should automatically select the aforementioned firmware file)
 
+#### Adding ROMs
+We compile a number of CHIP-8 games into our build. This is done programatically by the make task `build_roms`. 
+1. Add the games you wish to add to your build to the directory: `roms/games/`
+2. Run `make build_roms`
+3. Re-build the embedded code (see above)
+
+Note: You may first need to run, `make clean`. Additionally, this has only been tested on Mac, but the host system would need to have [xxd](https://linux.die.net/man/1/xxd) to run.
+
 ### Desktop App 
 ![Desktop Application](docs/app.png)
 
