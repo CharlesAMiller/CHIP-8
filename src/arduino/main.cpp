@@ -125,7 +125,7 @@ void loop()
 
     // Down on d-pad
     case '8':
-      selected_rom_idx += (selected_rom_idx < 16) ? 1 : 0;
+      selected_rom_idx += (selected_rom_idx < ROMS_COUNT) ? 1 : 0;
       break;
 
     case '=':
