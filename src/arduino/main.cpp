@@ -15,8 +15,9 @@ extern "C"
 #define STATE_LAUNCHER 0
 #define STATE_RUNNING 1
 
-byte device_state = STATE_RUNNING;
-byte selected_rom_idx = 2;
+byte device_state = STATE_LAUNCHER;
+byte selected_rom_idx = 0;
+byte prev_selected_rom_idx = -1;
 
 /* Display */
 #define TFT_DC 28
@@ -41,6 +42,10 @@ char keys[KEYPAD_ROWS][KEYPAD_COLS] = {
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, KEYPAD_ROWS, KEYPAD_COLS);
 
+/**
+ * Passed to our CHIP-8 instance as a display peripheral
+ * This function takes the CHIP-8's screen buffer as a parameter and renders it pixel-by-pixel
+ */
 void draw(uint8_t *screen_buffer)
 {
   uint8_t x, y, pixels;
@@ -65,10 +70,33 @@ void draw(uint8_t *screen_buffer)
   }
 }
 
+/**
+ * Function that is called to draw the launcher menu - a list of selectable ROMs 
+ */
+void draw_launcher(Adafruit_ILI9341 *screen, unsigned int selected_index, const char *selections[], unsigned int length)
+{
+  tft.fillScreen(ILI9341_BLACK);
+  tft.setCursor(0, 0);
+  int16_t x, y;
+  uint16_t w, h;
+  for (unsigned int i = 0; i < length; i++)
+  {
+    screen->setTextColor(ILI9341_WHITE);
+
+    // Highlight the curently selected title
+    if (i == selected_index)
+    {
+      screen->getTextBounds(selections[i], screen->getCursorX(), screen->getCursorY(), &x, &y, &w, &h);
+      screen->fillRect(x, y, w, h, ILI9341_WHITE);
+      screen->setTextColor(ILI9341_BLACK);
+    }
+    screen->println(selections[i]);
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
-
   tft.begin();
 
   peripherals peripherals;
@@ -81,36 +109,44 @@ void setup()
   chip8_config config = {&peripherals, chip8_memory, program_memory};
 
   cpu = chip8_init(&config);
-  memcpy(program_memory, rom_programs[selected_rom_idx], rom_programs_sizes[selected_rom_idx]);
 }
 
 void loop()
 {
-  Serial.print(cpu.state.memory[cpu.state.PC], HEX);
-  Serial.print(cpu.state.memory[cpu.state.PC + 1], HEX);
-  Serial.println();
   if (device_state == STATE_LAUNCHER)
   {
     char key = keypad.getKey();
-    switch (key) 
+    switch (key)
     {
-      // Up on d-pad
-      case '2':
-        selected_rom_idx -= (selected_rom_idx > 0) ? 1 : 0;
-        break;
+    // Up on d-pad
+    case '2':
+      selected_rom_idx -= (selected_rom_idx > 0) ? 1 : 0;
+      break;
 
-      // Down on d-pad 
-      case '8':
-        selected_rom_idx += (selected_rom_idx < 16) ? 1 : 0;
-        break;
-      
-      case '=':
-        device_state = (device_state == STATE_LAUNCHER) ? STATE_RUNNING : STATE_LAUNCHER;
-        break;
+    // Down on d-pad
+    case '8':
+      selected_rom_idx += (selected_rom_idx < 16) ? 1 : 0;
+      break;
+
+    case '=':
+      init_state(&(cpu.state), chip8_memory, program_memory);
+      memcpy(program_memory, rom_programs[selected_rom_idx], rom_programs_sizes[selected_rom_idx]);
+      device_state = STATE_RUNNING;
+      break;
+
+    case '/':
+      device_state = (device_state == STATE_LAUNCHER) ? STATE_RUNNING : STATE_LAUNCHER;
+      break;
     }
+    if (prev_selected_rom_idx != selected_rom_idx)
+      draw_launcher(&tft, selected_rom_idx, rom_names, ROMS_COUNT);
+    prev_selected_rom_idx = selected_rom_idx;
   }
   else if (device_state == STATE_RUNNING)
   {
+    Serial.print(cpu.state.memory[cpu.state.PC], HEX);
+    Serial.print(cpu.state.memory[cpu.state.PC + 1], HEX);
+    Serial.println();
     chip8_run(&cpu);
   }
 }
