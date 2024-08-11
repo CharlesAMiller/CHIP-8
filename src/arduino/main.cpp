@@ -20,10 +20,12 @@ byte selected_rom_idx = 0;
 byte prev_selected_rom_idx = -1;
 
 /* Display */
-#define TFT_DC 4
-#define TFT_CS 5
+#define TFT_DC 16
+#define TFT_CS 15
+#define TFT_MOSI 13
+#define TFT_SCLK 14
 
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
+Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK);
 
 /* CHIP-8 */
 chip8 cpu;
@@ -33,8 +35,8 @@ uint8_t *program_memory = &chip8_memory[PROGRAM_OFFSET];
 /* Keypad setup */
 const byte KEYPAD_ROWS = 4;
 const byte KEYPAD_COLS = 4;
-byte rowPins[KEYPAD_ROWS] = {15, 16, 17, 18};
-byte colPins[KEYPAD_COLS] = {8, 3, 9, 10};
+byte rowPins[KEYPAD_ROWS] = {42,41,40,39};
+byte colPins[KEYPAD_COLS] = {38,37,36,35};
 char keys[KEYPAD_ROWS][KEYPAD_COLS] = {
     {'1', '2', '3', '+'},
     {'4', '5', '6', '-'},
@@ -99,7 +101,7 @@ void setup()
 {
   Serial.begin(115200);
   tft.begin();
-  tft.fillScreen(ILI9341_CYAN);
+  tft.setSPISpeed(40000000);
   Serial.println("Reached setup");
 
   peripherals peripherals;
@@ -116,11 +118,6 @@ void setup()
 
 void loop()
 {
-  Serial.print("Pressed key: ");
-  Serial.print(keypad.getKey());
-  Serial.println();
-  // tft.fillScreen(ILI9341_CYAN);
-
   if (device_state == STATE_LAUNCHER)
   {
     char key = keypad.getKey();
@@ -140,6 +137,7 @@ void loop()
       init_state(&(cpu.state), chip8_memory, program_memory);
       memcpy(program_memory, rom_programs[selected_rom_idx], rom_programs_sizes[selected_rom_idx]);
       device_state = STATE_RUNNING;
+      Serial.println("Starting ROM");
       break;
 
     case '/':

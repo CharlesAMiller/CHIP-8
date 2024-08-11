@@ -13,32 +13,32 @@
     {
       "type": "wokwi-membrane-keypad",
       "id": "keypad",
-      "top": 17.2,
-      "left": 543.2,
+      "top": -338,
+      "left": 437.6,
       "attrs": {
         "keys": [ "1", "2", "3", "+", "4", "5", "6", "-", "7", "8", "9", "*", ".", "0", "=", "/" ]
       }
     },
-    { "type": "wokwi-ili9341", "id": "lcd1", "top": -268, "left": 57.3, "attrs": {} }
+    { "type": "wokwi-ili9341", "id": "lcd1", "top": -316, "left": 239.7, "attrs": {} }
   ],
   "connections": [
-    [ "esp:5V", "lcd1:VCC", "red", [ "h0" ] ],
-    [ "lcd1:GND", "esp:GND.1", "black", [ "v0" ] ],
-    [ "esp:48", "lcd1:SCK", "green", [ "h0" ] ],
-    [ "esp:TX", "$serialMonitor:RX", "", [] ],
-    [ "esp:RX", "$serialMonitor:TX", "", [] ],
-    [ "lcd1:CS", "esp:5", "green", [ "v0" ] ],
-    [ "lcd1:D/C", "esp:4", "green", [ "v0" ] ],
-    [ "esp:48", "lcd1:RST", "green", [ "h0" ] ],
-    [ "esp:6", "lcd1:MOSI", "green", [ "h0" ] ],
-    [ "esp:15", "keypad:R1", "green", [ "h0" ] ],
-    [ "keypad:R2", "esp:16", "green", [ "v0" ] ],
-    [ "esp:17", "keypad:R3", "green", [ "h0" ] ],
-    [ "keypad:R4", "esp:18", "green", [ "v0" ] ],
-    [ "esp:8", "keypad:C1", "green", [ "h0" ] ],
-    [ "esp:3", "keypad:C2", "green", [ "v0" ] ],
-    [ "esp:9", "keypad:C3", "green", [ "v0" ] ],
-    [ "esp:10", "keypad:C4", "green", [ "v0" ] ]
+    [ "$serialMonitor:RX", "esp:TX", "", [] ],
+    [ "$serialMonitor:TX", "esp:RX", "", [] ],
+    [ "lcd1:GND", "esp:GND.1", "black", [ "v9.6", "h-240", "v374.4" ] ],
+    [ "lcd1:VCC", "esp:5V", "red", [ "h-240", "v374.4" ] ],
+    [ "lcd1:CS", "esp:15", "green", [ "v19.2", "h-240", "v230.4" ] ],
+    [ "lcd1:MOSI", "esp:13", "green", [ "h-0.01", "v28.8", "h-259.2", "v326.4" ] ],
+    [ "lcd1:SCK", "esp:14", "green", [ "h-259.21", "v364.8" ] ],
+    [ "lcd1:MISO", "esp:12", "green", [ "h-268.81", "v345.6" ] ],
+    [ "lcd1:D/C", "esp:16", "green", [ "h-220.8", "v259.2" ] ],
+    [ "keypad:R1", "esp:42", "green", [ "v0" ] ],
+    [ "keypad:R2", "esp:41", "green", [ "v48", "h-326.8" ] ],
+    [ "keypad:R3", "esp:40", "green", [ "v0" ] ],
+    [ "keypad:R4", "esp:39", "green", [ "v0" ] ],
+    [ "keypad:C1", "esp:38", "green", [ "v0" ] ],
+    [ "keypad:C2", "esp:37", "green", [ "v0" ] ],
+    [ "keypad:C3", "esp:36", "green", [ "v0" ] ],
+    [ "keypad:C4", "esp:35", "green", [ "v0" ] ]
   ],
   "serialMonitor": { "display": "always", "newline": "lf", "convertEol": false },
   "dependencies": {}
