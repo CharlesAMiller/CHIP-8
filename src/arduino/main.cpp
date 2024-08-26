@@ -1,10 +1,10 @@
 /**
   CHIP8
 */
-#include <Keypad.h>
+// #include <Keypad.h>
 #include "SPI.h"
-#include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"
+#include <Wire.h>
+#include <Adafruit_SSD1306.h>
 extern "C"
 {
 #include "chip8/chip8.h"
@@ -20,12 +20,13 @@ byte selected_rom_idx = 0;
 byte prev_selected_rom_idx = -1;
 
 /* Display */
-#define TFT_DC 16
-#define TFT_CS 15
-#define TFT_MOSI 13
-#define TFT_SCLK 14
-
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK);
+#define SCL 9 
+#define SDA 8 
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+Adafruit_SSD1306 screen(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 /* CHIP-8 */
 chip8 cpu;
@@ -33,17 +34,17 @@ uint8_t chip8_memory[RAM_SIZE];
 uint8_t *program_memory = &chip8_memory[PROGRAM_OFFSET];
 
 /* Keypad setup */
-const byte KEYPAD_ROWS = 4;
-const byte KEYPAD_COLS = 4;
-byte rowPins[KEYPAD_ROWS] = {42,41,40,39};
-byte colPins[KEYPAD_COLS] = {38,37,36,35};
-char keys[KEYPAD_ROWS][KEYPAD_COLS] = {
-    {'1', '2', '3', '+'},
-    {'4', '5', '6', '-'},
-    {'7', '8', '9', '*'},
-    {'.', '0', '=', '/'}};
+// const byte KEYPAD_ROWS = 4;
+// const byte KEYPAD_COLS = 4;
+// byte rowPins[KEYPAD_ROWS] = {42,41,40,39};
+// byte colPins[KEYPAD_COLS] = {38,37,36,35};
+// char keys[KEYPAD_ROWS][KEYPAD_COLS] = {
+//     {'1', '2', '3', '+'},
+//     {'4', '5', '6', '-'},
+//     {'7', '8', '9', '*'},
+//     {'.', '0', '=', '/'}};
 
-Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, KEYPAD_ROWS, KEYPAD_COLS);
+// Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, KEYPAD_ROWS, KEYPAD_COLS);
 
 /**
  * Passed to our CHIP-8 instance as a display peripheral
@@ -51,58 +52,66 @@ Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, KEYPAD_ROWS, KEYPAD_C
  */
 void draw(uint8_t *screen_buffer)
 {
-  uint8_t x, y, pixels;
-  x = 0;
-  y = 0;
-  uint16_t color;
-  for (int i = 0; i < SCREEN_BYTES; i++)
-  {
-    if (i % H_OFFSET == 0)
-    {
-      x = 0;
-      y++;
-    }
+  // Serial.println("Draw");
+  // uint8_t x, y, pixels;
+  // x = 0;
+  // y = 0;
+  // uint16_t color;
+  // for (int i = 0; i < SCREEN_BYTES; i++)
+  // {
+  //   if (i % H_OFFSET == 0)
+  //   {
+  //     x = 0;
+  //     y++;
+  //   }
 
-    pixels = screen_buffer[i];
+  //   pixels = screen_buffer[i];
 
-    for (int j = 8; j > 0; j--, pixels <<= 1)
-    {
-      color = ((pixels & 0b10000000) != 0) ? ILI9341_RED : ILI9341_WHITE;
-      tft.drawPixel(x++, y, color);
-    }
-  }
+  //   for (int j = 8; j > 0; j--, pixels <<= 1)
+  //   {
+  //     color = ((pixels & 0b10000000) != 0) ? SSD1306_WHITE : SSD1306_BLACK;
+  //     screen.fillRect(x++, y, 2, 2, color);
+  //   }
+  // }
+  // screen.display();
 }
 
 /**
  * Function that is called to draw the launcher menu - a list of selectable ROMs 
  */
-void draw_launcher(Adafruit_ILI9341 *screen, unsigned int selected_index, const char *selections[], unsigned int length)
+void draw_launcher(Adafruit_SSD1306 *screen, unsigned int selected_index, const char *selections[], unsigned int length)
 {
-  tft.fillScreen(ILI9341_BLACK);
-  tft.setCursor(0, 0);
+  screen->clearDisplay();
+  screen->setCursor(0, 0);
   int16_t x, y;
   uint16_t w, h;
   for (unsigned int i = 0; i < length; i++)
   {
-    screen->setTextColor(ILI9341_WHITE);
+    screen->setTextColor(SSD1306_WHITE);
 
     // Highlight the curently selected title
     if (i == selected_index)
     {
       screen->getTextBounds(selections[i], screen->getCursorX(), screen->getCursorY(), &x, &y, &w, &h);
-      screen->fillRect(x, y, w, h, ILI9341_WHITE);
-      screen->setTextColor(ILI9341_BLACK);
+      screen->fillRect(x, y, w, h, SSD1306_WHITE);
+      screen->setTextColor(SSD1306_BLACK);
     }
     screen->println(selections[i]);
+    screen->display();
   }
 }
 
 void setup()
 {
   Serial.begin(115200);
-  tft.begin();
-  tft.setSPISpeed(40000000);
+  // screen.setSPISpeed(40000000);
   Serial.println("Reached setup");
+  if (!screen.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;); // Don't proceed, loop forever
+  }
+  // screen.clearDisplay();
+  // screen.println("TEST!");
 
   peripherals peripherals;
   peripherals.display = &draw;
@@ -118,9 +127,12 @@ void setup()
 
 void loop()
 {
+  screen.println("TEST!");
+  Serial.println("Test");
   if (device_state == STATE_LAUNCHER)
   {
-    char key = keypad.getKey();
+    // char key = keypad.getKey();
+    char key = '0';
     switch (key)
     {
     // Up on d-pad
@@ -145,7 +157,7 @@ void loop()
       break;
     }
     if (prev_selected_rom_idx != selected_rom_idx)
-      draw_launcher(&tft, selected_rom_idx, rom_names, ROMS_COUNT);
+      draw_launcher(&screen, selected_rom_idx, rom_names, ROMS_COUNT);
     prev_selected_rom_idx = selected_rom_idx;
   }
   else if (device_state == STATE_RUNNING)

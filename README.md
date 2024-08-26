@@ -66,6 +66,13 @@ We compile a number of CHIP-8 games into our build. This is done programatically
 
 Note: You may first need to run, `make clean`. Additionally, this has only been tested on Mac, but the host system would need to have [xxd](https://linux.die.net/man/1/xxd) to run.
 
+#### Bill of Materials
+
+| Item Name     | Qty           |
+| ------------- | ------------- |
+| [Keypad](https://www.amazon.com/gp/product/B0CPHVNXZQ/ref=ewc_pr_img_1?smid=A38CU2XC1RY0BO&psc=1)        | 1             |
+| [Display](https://www.amazon.com/gp/product/B0CG39ZH7V/ref=ewc_pr_img_1?smid=A2UYBS1CH53PM5&psc=1)       | 1             |
+
 ### Desktop App 
 ![Desktop Application](docs/app.png)
 
