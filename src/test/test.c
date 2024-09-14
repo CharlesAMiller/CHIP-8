@@ -51,7 +51,7 @@ void test_clear_display(state *state)
     };
 
     peripherals peripherals = {
-        .display = &clear_display_stub
+        .chip8_display = &clear_display_stub
     };
 
     assert(state->screen[0] == 1);

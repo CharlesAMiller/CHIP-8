@@ -195,7 +195,7 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
         state->I = decoded_op->nnn;
         break;
     case DRAW_SPRITE:
-        display(state, decoded_op);
+        chip8_display(state, decoded_op);
         peripherals->display(state->screen);
         break;
     case IF_EQ:
@@ -294,7 +294,7 @@ void execute(op *decoded_op, state *state, peripherals *peripherals)
     }
 }
 
-void display(state *state, op *decoded_op)
+void chip8_display(state *state, op *decoded_op)
 {
     // Because the screen with is 64, there are 8 bytes to each row,
     // this tells us which byte our given x pixel is in

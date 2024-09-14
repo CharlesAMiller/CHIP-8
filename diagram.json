@@ -3,11 +3,12 @@
   "author": "CharlesAMiller",
   "editor": "wokwi",
   "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp7", "top": -19.2, "left": 350.44, "attrs": {} },
     {
       "type": "board-esp32-s3-devkitc-1",
       "id": "esp",
       "top": 124.62,
-      "left": 158.17,
+      "left": 167.77,
       "attrs": {}
     },
     {
@@ -24,21 +25,21 @@
   "connections": [
     [ "$serialMonitor:RX", "esp:TX", "", [] ],
     [ "$serialMonitor:TX", "esp:RX", "", [] ],
-    [ "lcd1:GND", "esp:GND.1", "black", [ "v9.6", "h-240", "v374.4" ] ],
-    [ "lcd1:VCC", "esp:5V", "red", [ "h-240", "v374.4" ] ],
-    [ "lcd1:CS", "esp:15", "green", [ "v19.2", "h-240", "v230.4" ] ],
-    [ "lcd1:MOSI", "esp:13", "green", [ "h-0.01", "v28.8", "h-259.2", "v326.4" ] ],
-    [ "lcd1:SCK", "esp:14", "green", [ "h-259.21", "v364.8" ] ],
-    [ "lcd1:MISO", "esp:12", "green", [ "h-268.81", "v345.6" ] ],
-    [ "lcd1:D/C", "esp:16", "green", [ "h-220.8", "v259.2" ] ],
     [ "keypad:R1", "esp:42", "green", [ "v0" ] ],
-    [ "keypad:R2", "esp:41", "green", [ "v48", "h-326.8" ] ],
+    [ "keypad:R2", "esp:41", "green", [ "v211.2", "h-288.4" ] ],
     [ "keypad:R3", "esp:40", "green", [ "v0" ] ],
     [ "keypad:R4", "esp:39", "green", [ "v0" ] ],
     [ "keypad:C1", "esp:38", "green", [ "v0" ] ],
     [ "keypad:C2", "esp:37", "green", [ "v0" ] ],
     [ "keypad:C3", "esp:36", "green", [ "v0" ] ],
-    [ "keypad:C4", "esp:35", "green", [ "v0" ] ]
+    [ "keypad:C4", "esp:35", "green", [ "v0" ] ],
+    [ "esp7:15", "lcd1:CS", "green", [ "v38.4", "h-144" ] ],
+    [ "lcd1:D/C", "esp7:16", "green", [ "v9.6", "h134.4", "v134.4" ] ],
+    [ "lcd1:MISO", "esp7:12", "green", [ "v0" ] ],
+    [ "lcd1:SCK", "esp7:14", "green", [ "v144", "h-0.01" ] ],
+    [ "lcd1:MOSI", "esp7:13", "green", [ "v172.8", "h-0.01" ] ],
+    [ "lcd1:GND", "esp7:GND.2", "black", [ "v19.2", "h153.6" ] ],
+    [ "lcd1:VCC", "esp7:5V", "red", [ "v0" ] ]
   ],
   "serialMonitor": { "display": "always", "newline": "lf", "convertEol": false },
   "dependencies": {}

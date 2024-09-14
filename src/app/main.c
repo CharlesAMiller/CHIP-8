@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 
 void init_peripherals(peripherals *peripherals)
 {
-    peripherals->display = &draw_screen;
+    peripherals->chip8_display = &draw_screen;
     peripherals->get_key_pressed = &get_key_pressed;
     peripherals->is_key_pressed = &is_key_pressed;
     peripherals->random = &rand_byte;

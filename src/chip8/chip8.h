@@ -530,7 +530,7 @@ chip8 chip8_init(chip8_config *config);
  * @brief Function called when decoding a DISPLAY operation
  * It sets the states screen buffer appropriately
  */
-void display(state *state, op *decoded_op);
+void chip8_display(state *state, op *decoded_op);
 
 // If SP was previously defined, redefine it here
 #ifdef SP_BACKUP

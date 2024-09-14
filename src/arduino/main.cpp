@@ -1,10 +1,22 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Keypad.h>
+
+/* Display */
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+#define SDA 12
+#define SCL 11
+// I2C display address 
+#define OLED_ADDR 0x3C
+
 /**
   CHIP8
 */
-#include <Keypad.h>
-#include "SPI.h"
-#include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"
+
 extern "C"
 {
 #include "chip8/chip8.h"
@@ -18,14 +30,6 @@ extern "C"
 byte device_state = STATE_LAUNCHER;
 byte selected_rom_idx = 0;
 byte prev_selected_rom_idx = -1;
-
-/* Display */
-#define TFT_DC 16
-#define TFT_CS 15
-#define TFT_MOSI 13
-#define TFT_SCLK 14
-
-Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_MOSI, TFT_SCLK);
 
 /* CHIP-8 */
 chip8 cpu;
@@ -41,9 +45,12 @@ char keys[KEYPAD_ROWS][KEYPAD_COLS] = {
     {'1', '2', '3', '+'},
     {'4', '5', '6', '-'},
     {'7', '8', '9', '*'},
-    {'.', '0', '=', '/'}};
+    {'.', '0', '=', '/'}
+  };
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, KEYPAD_ROWS, KEYPAD_COLS);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
 
 /**
  * Passed to our CHIP-8 instance as a display peripheral
@@ -67,8 +74,8 @@ void draw(uint8_t *screen_buffer)
 
     for (int j = 8; j > 0; j--, pixels <<= 1)
     {
-      color = ((pixels & 0b10000000) != 0) ? ILI9341_RED : ILI9341_WHITE;
-      tft.drawPixel(x++, y, color);
+      color = ((pixels & 0b10000000) != 0) ? SSD1306_BLACK : SSD1306_WHITE;
+      display.drawPixel(x++, y, color);
     }
   }
 }
@@ -76,33 +83,59 @@ void draw(uint8_t *screen_buffer)
 /**
  * Function that is called to draw the launcher menu - a list of selectable ROMs 
  */
-void draw_launcher(Adafruit_ILI9341 *screen, unsigned int selected_index, const char *selections[], unsigned int length)
+void draw_launcher(Adafruit_SSD1306 *screen, unsigned int selected_index, const char *selections[], unsigned int length)
 {
-  tft.fillScreen(ILI9341_BLACK);
-  tft.setCursor(0, 0);
+  Serial.println("Drawing Launcher");
+  display.clearDisplay();
+  display.setCursor(0, 0);
   int16_t x, y;
   uint16_t w, h;
   for (unsigned int i = 0; i < length; i++)
   {
-    screen->setTextColor(ILI9341_WHITE);
+    screen->setTextColor(SSD1306_WHITE);
 
     // Highlight the curently selected title
     if (i == selected_index)
     {
       screen->getTextBounds(selections[i], screen->getCursorX(), screen->getCursorY(), &x, &y, &w, &h);
-      screen->fillRect(x, y, w, h, ILI9341_WHITE);
-      screen->setTextColor(ILI9341_BLACK);
+      screen->fillRect(x, y, w, h, SSD1306_WHITE);
+      screen->setTextColor(SSD1306_BLACK);
     }
     screen->println(selections[i]);
   }
+  display.display();
 }
 
 void setup()
 {
   Serial.begin(115200);
-  tft.begin();
-  tft.setSPISpeed(40000000);
-  Serial.println("Reached setup");
+  delay(2000); // Waiting for Serial.
+
+  Serial.println("Running setup");
+
+  Wire.begin(SDA, SCL); 
+  
+  // Initialize the display
+  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for (;;)
+      ;  // Loop forever if there's an error
+  }
+
+  // Clear the buffer
+  display.clearDisplay();
+
+  // Display some initial text
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 10);
+  display.println(F("Hello, CHIP8!"));
+
+  // Update the display with the written text
+  display.display();
+  delay(2000);
+
+  Serial.println("Adding peripherals");
 
   peripherals peripherals;
   peripherals.display = &draw;
@@ -145,7 +178,7 @@ void loop()
       break;
     }
     if (prev_selected_rom_idx != selected_rom_idx)
-      draw_launcher(&tft, selected_rom_idx, rom_names, ROMS_COUNT);
+      draw_launcher(&display, selected_rom_idx, rom_names, ROMS_COUNT);
     prev_selected_rom_idx = selected_rom_idx;
   }
   else if (device_state == STATE_RUNNING)
