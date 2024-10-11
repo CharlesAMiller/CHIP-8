@@ -3,14 +3,7 @@
   "author": "CharlesAMiller",
   "editor": "wokwi",
   "parts": [
-    { "type": "board-esp32-devkit-c-v4", "id": "esp7", "top": -19.2, "left": 350.44, "attrs": {} },
-    {
-      "type": "board-esp32-s3-devkitc-1",
-      "id": "esp",
-      "top": 124.62,
-      "left": 167.77,
-      "attrs": {}
-    },
+    { "type": "board-esp32-s3-devkitc-1", "id": "esp", "top": 38.22, "left": 302.17, "attrs": {} },
     {
       "type": "wokwi-membrane-keypad",
       "id": "keypad",
@@ -20,7 +13,13 @@
         "keys": [ "1", "2", "3", "+", "4", "5", "6", "-", "7", "8", "9", "*", ".", "0", "=", "/" ]
       }
     },
-    { "type": "wokwi-ili9341", "id": "lcd1", "top": -316, "left": 239.7, "attrs": {} }
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": -179.26,
+      "left": 173.03,
+      "attrs": { "i2cAddress": "0x3c" }
+    }
   ],
   "connections": [
     [ "$serialMonitor:RX", "esp:TX", "", [] ],
@@ -33,13 +32,10 @@
     [ "keypad:C2", "esp:37", "green", [ "v0" ] ],
     [ "keypad:C3", "esp:36", "green", [ "v0" ] ],
     [ "keypad:C4", "esp:35", "green", [ "v0" ] ],
-    [ "esp7:15", "lcd1:CS", "green", [ "v38.4", "h-144" ] ],
-    [ "lcd1:D/C", "esp7:16", "green", [ "v9.6", "h134.4", "v134.4" ] ],
-    [ "lcd1:MISO", "esp7:12", "green", [ "v0" ] ],
-    [ "lcd1:SCK", "esp7:14", "green", [ "v144", "h-0.01" ] ],
-    [ "lcd1:MOSI", "esp7:13", "green", [ "v172.8", "h-0.01" ] ],
-    [ "lcd1:GND", "esp7:GND.2", "black", [ "v19.2", "h153.6" ] ],
-    [ "lcd1:VCC", "esp7:5V", "red", [ "v0" ] ]
+    [ "oled1:SDA", "esp:12", "green", [ "h86.47", "v86.4" ] ],
+    [ "oled1:SCL", "esp:11", "green", [ "v-38.4", "h115.5", "v432" ] ],
+    [ "oled1:GND", "esp:GND.1", "black", [ "h-96", "v441.6" ] ],
+    [ "oled1:VCC", "esp:3V3.1", "red", [ "h153.75", "v240" ] ]
   ],
   "serialMonitor": { "display": "always", "newline": "lf", "convertEol": false },
   "dependencies": {}
