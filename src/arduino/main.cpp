@@ -34,7 +34,7 @@ byte prev_selected_rom_idx = -1;
 /* CHIP-8 */
 chip8 cpu;
 uint8_t chip8_memory[RAM_SIZE];
-uint8_t *program_memory = &chip8_memory[PROGRAM_OFFSET];
+peripherals periphs;
 
 /* Keypad setup */
 const byte KEYPAD_ROWS = 4;
@@ -67,17 +67,20 @@ void draw(uint8_t *screen_buffer)
     if (i % H_OFFSET == 0)
     {
       x = 0;
-      y++;
+      y += 2;
     }
 
     pixels = screen_buffer[i];
 
     for (int j = 8; j > 0; j--, pixels <<= 1)
     {
-      color = ((pixels & 0b10000000) != 0) ? SSD1306_BLACK : SSD1306_WHITE;
-      display.drawPixel(x++, y, color);
+      color = ((pixels & 0b10000000) != 0) ? SSD1306_WHITE : SSD1306_BLACK;
+      display.drawRect(x, y, 2, 2, color);
+      x += 2;
     }
   }
+
+  display.display();
 }
 
 /**
@@ -104,6 +107,25 @@ void draw_launcher(Adafruit_SSD1306 *screen, unsigned int selected_index, const 
     screen->println(selections[i]);
   }
   display.display();
+}
+
+uint8_t get_key()
+{
+  return 0;
+}
+
+uint8_t is_key_pressed(uint8_t key)
+{
+  return 0;
+}
+
+uint8_t random_byte()
+{
+  return 4;
+}
+
+void noise()
+{
 }
 
 void setup()
@@ -137,14 +159,13 @@ void setup()
 
   Serial.println("Adding peripherals");
 
-  peripherals peripherals;
-  peripherals.display = &draw;
-  peripherals.get_key_pressed = NULL;
-  peripherals.is_key_pressed = NULL;
-  peripherals.random = NULL;
-  peripherals.noise = NULL;
+  periphs.display = &draw;
+  periphs.get_key_pressed = &get_key;
+  periphs.is_key_pressed = &is_key_pressed;
+  periphs.random = &random_byte;
+  periphs.noise = &noise;
 
-  chip8_config config = {&peripherals, chip8_memory, program_memory};
+  chip8_config config = {&periphs, chip8_memory, NULL };
 
   cpu = chip8_init(&config);
 }
@@ -167,10 +188,12 @@ void loop()
       break;
 
     case '=':
-      init_state(&(cpu.state), chip8_memory, program_memory);
-      memcpy(program_memory, rom_programs[selected_rom_idx], rom_programs_sizes[selected_rom_idx]);
+      init_state(&(cpu.state), chip8_memory);
+      chip8_load_program(&cpu, ((uint8_t *) rom_programs[selected_rom_idx]), rom_programs_sizes[selected_rom_idx]);
       device_state = STATE_RUNNING;
       Serial.println("Starting ROM");
+      display.clearDisplay();
+      display.display();
       break;
 
     case '/':
@@ -183,9 +206,10 @@ void loop()
   }
   else if (device_state == STATE_RUNNING)
   {
-    Serial.print(cpu.state.memory[cpu.state.PC], HEX);
-    Serial.print(cpu.state.memory[cpu.state.PC + 1], HEX);
-    Serial.println();
+    // Debugging instructions
+    // Serial.print(cpu.state.memory[cpu.state.PC], HEX);
+    // Serial.print(cpu.state.memory[cpu.state.PC + 1], HEX);
+    // Serial.println();
     chip8_run(&cpu);
   }
 }
