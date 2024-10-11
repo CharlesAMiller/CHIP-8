@@ -342,11 +342,20 @@ chip8 chip8_init(chip8_config *config)
 {
     chip8 cpu;
     cpu.peripherals = config->peripherals;
-    init_state(&cpu.state, config->memory, config->program);
+    init_state(&cpu.state, config->memory);
+    if (config->program != NULL)
+        chip8_load_program(&cpu, config->program, PROGRAM_SIZE);
+
     return cpu;
 } 
 
-void init_state(state *state, uint8_t *memory, uint8_t *program)
+void chip8_load_program(chip8 *cpu, uint8_t *program, size_t program_size)
+{
+    // Store the given program at the correct place in memory
+    memcpy(cpu->state.memory + PROGRAM_OFFSET, program, program_size);
+}
+
+void init_state(state *state, uint8_t *memory)
 {
     // Point our memory to wherever has been allocated for us
     state->memory = memory;
@@ -354,8 +363,6 @@ void init_state(state *state, uint8_t *memory, uint8_t *program)
     memset(state->memory, 0, RAM_SIZE);
     // Store sprite representation of hex digits to memory
     memcpy(&state->memory[DIGIT_SPRITES_OFFSET], digit_sprites_data, sizeof(digit_sprites_data));
-    // Store the given program at the correct place in memory
-    memcpy(&state->memory[PROGRAM_OFFSET], program, PROGRAM_SIZE);
     // Zero the stack
     memset(state->stack, 0, STACK_COUNT);
 

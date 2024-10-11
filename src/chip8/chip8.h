@@ -479,7 +479,7 @@ typedef struct chip8_config
  * It zeroes memory, registers, and sets up the memory appropriately. It maps the program
  * into the appropriate place in the device's memory
  */
-void init_state(state *state, uint8_t *memory, uint8_t *program);
+void init_state(state *state, uint8_t *memory);
 
 /**
  * @brief This function reads the next instruction from memory, based off of the given state's PC.
@@ -525,6 +525,15 @@ void chip8_run(chip8 *cpu);
  * @returns - A well formed CHIP-8 device
  */
 chip8 chip8_init(chip8_config *config);
+
+/**
+ * @brief Loads a program into the CHIP-8's memory
+ * 
+ * @param cpu - The CHIP-8 instance to load the program into
+ * @param program - The program to load into the CHIP-8's memory
+ * @param program_size - The size of the program to load - should not exceed PROGRAM_SIZE
+ */
+void chip8_load_program(chip8 *cpu, uint8_t *program, size_t program_size);
 
 /**
  * @brief Function called when decoding a DISPLAY operation
