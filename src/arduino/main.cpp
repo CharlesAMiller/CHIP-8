@@ -10,7 +10,7 @@
 
 #define SDA 12
 #define SCL 11
-// I2C display address 
+// I2C display address
 #define OLED_ADDR 0x3C
 
 /**
@@ -39,18 +39,18 @@ peripherals periphs;
 /* Keypad setup */
 const byte KEYPAD_ROWS = 4;
 const byte KEYPAD_COLS = 4;
-byte rowPins[KEYPAD_ROWS] = {42,41,40,39};
-byte colPins[KEYPAD_COLS] = {38,37,36,35};
+byte rowPins[KEYPAD_ROWS] = {42, 41, 40, 39};
+byte colPins[KEYPAD_COLS] = {38, 37, 36, 35};
 char keys[KEYPAD_ROWS][KEYPAD_COLS] = {
     {'1', '2', '3', '+'},
     {'4', '5', '6', '-'},
     {'7', '8', '9', '*'},
-    {'.', '0', '=', '/'}
-  };
-
+    {'.', '0', '=', '/'}};
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, KEYPAD_ROWS, KEYPAD_COLS);
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+char last_pressed_key;
+KeyState key_state;
 
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 /**
  * Passed to our CHIP-8 instance as a display peripheral
@@ -84,7 +84,7 @@ void draw(uint8_t *screen_buffer)
 }
 
 /**
- * Function that is called to draw the launcher menu - a list of selectable ROMs 
+ * Function that is called to draw the launcher menu - a list of selectable ROMs
  */
 void draw_launcher(Adafruit_SSD1306 *screen, unsigned int selected_index, const char *selections[], unsigned int length)
 {
@@ -111,17 +111,63 @@ void draw_launcher(Adafruit_SSD1306 *screen, unsigned int selected_index, const 
 
 uint8_t get_key()
 {
-  return 0;
+  char key = keypad.waitForKey();
+
+  switch (key)
+  {
+    case '.':
+      return 0xA;
+    case '=':
+      return 0xB;
+    case '+':
+      return 0xC;
+    case '-':
+      return 0xD; 
+    case '*':
+      return 0xE;
+    case '/':
+      return 0xF;
+    default:
+      return key - '0';
+  }
+  return key;
 }
 
 uint8_t is_key_pressed(uint8_t key)
 {
-  return 0;
+  char key_char;
+
+  switch (key)
+  {
+    case 0xA:
+      key_char = '.';
+      break;
+    case 0xB:
+      key_char = '=';
+      break;
+    case 0xC:
+      key_char = '+';
+      break;
+    case 0xD:
+      key_char = '-';
+      break;
+    case 0xE:
+      key_char = '*';
+      break;
+    case 0xF:
+      key_char = '/';
+      break;
+    default:
+      key_char = key + '0';
+      break;
+  }
+
+  return key_char == last_pressed_key && (key_state == HOLD || key_state == PRESSED);
 }
 
 uint8_t random_byte()
 {
-  return 4;
+  return random(0, 255);
 }
 
 void noise()
@@ -135,13 +181,14 @@ void setup()
 
   Serial.println("Running setup");
 
-  Wire.begin(SDA, SCL); 
-  
+  Wire.begin(SDA, SCL);
+
   // Initialize the display
-  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
+  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR))
+  {
     Serial.println(F("SSD1306 allocation failed"));
     for (;;)
-      ;  // Loop forever if there's an error
+      ; // Loop forever if there's an error
   }
 
   // Clear the buffer
@@ -155,7 +202,7 @@ void setup()
 
   // Update the display with the written text
   display.display();
-  delay(2000);
+  // delay(2000);
 
   Serial.println("Adding peripherals");
 
@@ -165,7 +212,9 @@ void setup()
   periphs.random = &random_byte;
   periphs.noise = &noise;
 
-  chip8_config config = {&periphs, chip8_memory, NULL };
+  keypad.setDebounceTime(5);
+
+  chip8_config config = {&periphs, chip8_memory, NULL};
 
   cpu = chip8_init(&config);
 }
@@ -189,7 +238,7 @@ void loop()
 
     case '=':
       init_state(&(cpu.state), chip8_memory);
-      chip8_load_program(&cpu, ((uint8_t *) rom_programs[selected_rom_idx]), rom_programs_sizes[selected_rom_idx]);
+      chip8_load_program(&cpu, ((uint8_t *)rom_programs[selected_rom_idx]), rom_programs_sizes[selected_rom_idx]);
       device_state = STATE_RUNNING;
       Serial.println("Starting ROM");
       display.clearDisplay();
@@ -206,6 +255,10 @@ void loop()
   }
   else if (device_state == STATE_RUNNING)
   {
+    key_state = keypad.getState();
+    char key = keypad.getKey();
+    if (key != NO_KEY)
+      last_pressed_key = key;
     // Debugging instructions
     // Serial.print(cpu.state.memory[cpu.state.PC], HEX);
     // Serial.print(cpu.state.memory[cpu.state.PC + 1], HEX);
